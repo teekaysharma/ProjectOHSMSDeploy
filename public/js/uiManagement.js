@@ -925,16 +925,12 @@
             }
             
             // Update recommendations
-            if (window.recommendations && window.recommendations.renderDashboardRecommendations) {
-                window.recommendations.renderDashboardRecommendations();
-            } else if (typeof renderDashboardRecommendations === 'function') {
+            if (typeof renderDashboardRecommendations === 'function') {
                 renderDashboardRecommendations();
             }
             
             // Update executive summary
-            if (window.projectManagement && window.projectManagement.updateDashboardExecutiveSummary) {
-                window.projectManagement.updateDashboardExecutiveSummary();
-            } else if (typeof updateDashboardExecutiveSummary === 'function') {
+            if (typeof updateDashboardExecutiveSummary === 'function') {
                 updateDashboardExecutiveSummary();
             }
             

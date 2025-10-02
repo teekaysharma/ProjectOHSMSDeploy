@@ -6,7 +6,14 @@
             let recommendations = '<div class="recommendations-list">';
             
             // Check management system audit
-            const managementData = Object.values(project.managementSystemAudit || {}).flat();
+            let managementData = [];
+            if (project.managementSystemAudit) {
+                for (const section in project.managementSystemAudit) {
+                    if (Array.isArray(project.managementSystemAudit[section])) {
+                        managementData = managementData.concat(project.managementSystemAudit[section]);
+                    }
+                }
+            }
             const managementIssues = managementData.filter(item => item.score < 3); // Non-conformances and observations
             
             if (managementIssues.length > 0) {
@@ -19,12 +26,22 @@
                 if (criticalIssues.length > 0) {
                     recommendations += `<div class="recommendation-item critical">`;
                     recommendations += `<strong>Critical Issues (${criticalIssues.length}):</strong> Immediate action required for major non-conformances in the management system.`;
+                    recommendations += '<ul>';
+                    criticalIssues.forEach(issue => {
+                        recommendations += `<li>${issue.name}${issue.comment ? ' - ' + issue.comment : ''}</li>`;
+                    });
+                    recommendations += '</ul>';
                     recommendations += '</div>';
                 }
                 
                 if (minorIssues.length > 0) {
                     recommendations += `<div class="recommendation-item warning">`;
                     recommendations += `<strong>Minor Issues (${minorIssues.length}):</strong> Address minor non-conformances in the management system within the specified timeframe.`;
+                    recommendations += '<ul>';
+                    minorIssues.forEach(issue => {
+                        recommendations += `<li>${issue.name}${issue.comment ? ' - ' + issue.comment : ''}</li>`;
+                    });
+                    recommendations += '</ul>';
                     recommendations += '</div>';
                 }
                 
@@ -34,7 +51,12 @@
             // Check site performance audit
             let siteIssues = [];
             if (project.currentSite && project.sites[project.currentSite]) {
-                siteIssues = Object.values(project.sites[project.currentSite]).flat();
+                const currentSite = project.sites[project.currentSite];
+                for (const section in currentSite) {
+                    if (Array.isArray(currentSite[section])) {
+                        siteIssues = siteIssues.concat(currentSite[section]);
+                    }
+                }
                 siteIssues = siteIssues.filter(item => item.score < 3);
             }
             
@@ -43,20 +65,51 @@
                 const minorIssues = siteIssues.filter(item => item.score === 2);
                 
                 recommendations += '<div class="recommendation-category">';
-                recommendations += '<h4>Site Performance Recommendations</h4>';
+                recommendations += `<h4>Site Performance Recommendations (${project.currentSite})</h4>`;
                 
                 if (criticalIssues.length > 0) {
                     recommendations += `<div class="recommendation-item critical">`;
                     recommendations += `<strong>Critical Issues (${criticalIssues.length}):</strong> Immediate action required for major non-conformances at the site.`;
+                    recommendations += '<ul>';
+                    criticalIssues.forEach(issue => {
+                        recommendations += `<li>${issue.name}${issue.comment ? ' - ' + issue.comment : ''}</li>`;
+                    });
+                    recommendations += '</ul>';
                     recommendations += '</div>';
                 }
                 
                 if (minorIssues.length > 0) {
                     recommendations += `<div class="recommendation-item warning">`;
                     recommendations += `<strong>Minor Issues (${minorIssues.length}):</strong> Address minor non-conformances at the site within the specified timeframe.`;
+                    recommendations += '<ul>';
+                    minorIssues.forEach(issue => {
+                        recommendations += `<li>${issue.name}${issue.comment ? ' - ' + issue.comment : ''}</li>`;
+                    });
+                    recommendations += '</ul>';
                     recommendations += '</div>';
                 }
                 
+                recommendations += '</div>';
+            }
+            
+            // Add best practices recognition
+            const managementBestPractices = managementData.filter(item => item.score === 5);
+            let siteBestPractices = [];
+            if (project.currentSite && project.sites[project.currentSite]) {
+                const currentSite = project.sites[project.currentSite];
+                for (const section in currentSite) {
+                    if (Array.isArray(currentSite[section])) {
+                        siteBestPractices = siteBestPractices.concat(currentSite[section].filter(item => item.score === 5));
+                    }
+                }
+            }
+            
+            if (managementBestPractices.length > 0 || siteBestPractices.length > 0) {
+                recommendations += '<div class="recommendation-category">';
+                recommendations += '<h4>Best Practices Identified</h4>';
+                recommendations += `<div class="recommendation-item success">`;
+                recommendations += `<strong>Excellent Performance:</strong> ${managementBestPractices.length + siteBestPractices.length} areas demonstrate best practices that exceed requirements.`;
+                recommendations += '</div>';
                 recommendations += '</div>';
             }
             
