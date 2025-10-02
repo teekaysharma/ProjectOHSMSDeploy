@@ -125,11 +125,9 @@ import './public/js/utils.js';
 import './public/js/dataManagement.js';
 import './public/js/uiManagement.js';
 import './public/js/chartManagement.js';
-import './public/js/siteManagement.js';
 import './public/js/projectManagement.js';
 import './public/js/recommendations.js';
 import './public/js/reportGeneration.js';
-import './public/js/main.js';
 import './public/js/comparison-chart-extension.js';
 
 // Initialize the application after DOM is loaded

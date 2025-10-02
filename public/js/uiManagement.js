@@ -918,24 +918,24 @@
             console.log('Updating all dashboard components...');
             
             // Update dashboard summary and charts
-            if (typeof updateDashboard === 'function') {
-                updateDashboard();
-            } else if (window.chartManagement && window.chartManagement.updateDashboard) {
+            if (window.chartManagement && window.chartManagement.updateDashboard) {
                 window.chartManagement.updateDashboard();
+            } else if (typeof updateDashboard === 'function') {
+                updateDashboard();
             }
             
             // Update recommendations
-            if (typeof renderDashboardRecommendations === 'function') {
-                renderDashboardRecommendations();
-            } else if (window.recommendations && window.recommendations.renderDashboardRecommendations) {
+            if (window.recommendations && window.recommendations.renderDashboardRecommendations) {
                 window.recommendations.renderDashboardRecommendations();
+            } else if (typeof renderDashboardRecommendations === 'function') {
+                renderDashboardRecommendations();
             }
             
             // Update executive summary
-            if (typeof updateDashboardExecutiveSummary === 'function') {
-                updateDashboardExecutiveSummary();
-            } else if (window.projectManagement && window.projectManagement.updateDashboardExecutiveSummary) {
+            if (window.projectManagement && window.projectManagement.updateDashboardExecutiveSummary) {
                 window.projectManagement.updateDashboardExecutiveSummary();
+            } else if (typeof updateDashboardExecutiveSummary === 'function') {
+                updateDashboardExecutiveSummary();
             }
             
             console.log('All dashboard components updated successfully');

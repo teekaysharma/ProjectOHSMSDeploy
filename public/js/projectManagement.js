@@ -84,6 +84,28 @@
         if (cloneProjectBtn) {
             cloneProjectBtn.addEventListener('click', cloneCurrentProject);
         }
+        
+        // Add site button
+        const addSiteBtn = document.getElementById('addSiteBtn');
+        if (addSiteBtn) {
+            addSiteBtn.addEventListener('click', addSiteFromInputField);
+        }
+        
+        // Add multiple sites button
+        const addMultipleSitesBtn = document.getElementById('addMultipleSitesBtn');
+        if (addMultipleSitesBtn) {
+            addMultipleSitesBtn.addEventListener('click', importSitesFromCSV);
+        }
+        
+        // Add site name input field enter key listener
+        const newSiteNameField = document.getElementById('newSiteName');
+        if (newSiteNameField) {
+            newSiteNameField.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    addSiteFromInputField();
+                }
+            });
+        }
     }
     
     // Update project selector
@@ -357,6 +379,132 @@
         }
     }
     
+    // Add site from input field
+    function addSiteFromInputField() {
+        try {
+            const newSiteNameField = document.getElementById('newSiteName');
+            if (!newSiteNameField) {
+                console.error('New site name input field not found');
+                return;
+            }
+            
+            const siteName = newSiteNameField.value.trim();
+            if (!siteName) {
+                alert('Please enter a site name');
+                return;
+            }
+            
+            const project = window.app.getCurrentProject();
+            if (!project) {
+                alert('No project selected. Please select or create a project first.');
+                return;
+            }
+            
+            if (project.sites[siteName]) {
+                alert('A site with this name already exists');
+                return;
+            }
+            
+            // Create new site
+            project.sites[siteName] = {};
+            
+            // Initialize with current master configuration
+            for (const section in window.app.masterConfig.site) {
+                project.sites[siteName][section] = window.app.masterConfig.site[section].map(name => ({
+                    name, 
+                    score: 0, 
+                    comment: ''
+                }));
+            }
+            
+            // Select the new site
+            selectSite(siteName);
+            
+            // Clear the input field
+            newSiteNameField.value = '';
+            
+            console.log(`Site "${siteName}" added successfully`);
+        } catch (error) {
+            console.error('Error adding site from input field:', error);
+        }
+    }
+    
+    // Import sites from CSV (placeholder for future implementation)
+    function importSitesFromCSV() {
+        try {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.csv,.xlsx,.xls';
+            input.onchange = e => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = evt => {
+                    try {
+                        const text = evt.target.result;
+                        const lines = text.split('\n');
+                        const siteNames = [];
+                        
+                        // Parse CSV - assume site names are in first column
+                        lines.forEach((line, index) => {
+                            const siteName = line.split(',')[0].trim();
+                            if (siteName && index > 0) { // Skip header row
+                                siteNames.push(siteName);
+                            }
+                        });
+                        
+                        if (siteNames.length === 0) {
+                            alert('No valid site names found in the file');
+                            return;
+                        }
+                        
+                        const project = window.app.getCurrentProject();
+                        if (!project) {
+                            alert('No project selected. Please select or create a project first.');
+                            return;
+                        }
+                        
+                        let addedCount = 0;
+                        siteNames.forEach(siteName => {
+                            if (siteName && !project.sites[siteName]) {
+                                // Create new site
+                                project.sites[siteName] = {};
+                                
+                                // Initialize with current master configuration
+                                for (const section in window.app.masterConfig.site) {
+                                    project.sites[siteName][section] = window.app.masterConfig.site[section].map(name => ({
+                                        name, 
+                                        score: 0, 
+                                        comment: ''
+                                    }));
+                                }
+                                addedCount++;
+                            }
+                        });
+                        
+                        updateSiteSelector();
+                        if (typeof saveData === 'function') {
+                            saveData();
+                        }
+                        
+                        alert(`Successfully added ${addedCount} sites from CSV file`);
+                        console.log(`Imported ${addedCount} sites from CSV`);
+                        
+                    } catch (err) {
+                        console.error('Error parsing CSV file:', err);
+                        alert('Error parsing CSV file. Please check the file format.');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        } catch (error) {
+            console.error('Error importing sites from CSV:', error);
+            alert('Error importing sites from CSV. Please check the console for details.');
+        }
+    }
+    
     // Get summary data for reports
     function getSummaryData(siteName = null) {
         try {
@@ -597,6 +745,8 @@
     window.selectSite = selectSite;
     window.addNewProject = addNewProject;
     window.cloneCurrentProject = cloneCurrentProject;
+    window.addSiteFromInputField = addSiteFromInputField;
+    window.importSitesFromCSV = importSitesFromCSV;
     window.getSummaryData = getSummaryData;
     window.getReportSummaryData = getReportSummaryData;
     window.generateExecutiveSummary = generateExecutiveSummary;
