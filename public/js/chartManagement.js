@@ -25,7 +25,7 @@
         
         if (scope === 'management') {
             // Get management data
-            const project = app.getCurrentProject();
+            const project = window.app.getCurrentProject();
             if (project && project.managementSystemAudit) {
                 for (const section in project.managementSystemAudit) {
                     if (Array.isArray(project.managementSystemAudit[section])) {
@@ -35,7 +35,7 @@
             }
         } else if (scope === 'all-sites') {
             // Get all sites data
-            const project = app.getCurrentProject();
+            const project = window.app.getCurrentProject();
             if (project && project.sites) {
                 for (const siteName in project.sites) {
                     const site = project.sites[siteName];
@@ -48,7 +48,7 @@
             }
         } else {
             // Get current site data (default)
-            const project = app.getCurrentProject();
+            const project = window.app.getCurrentProject();
             if (project && project.currentSite && project.sites[project.currentSite]) {
                 const site = project.sites[project.currentSite];
                 for (const section in site) {
@@ -412,7 +412,7 @@
             console.log('Updating dashboard...');
             
             // Get current chart scope
-            const scope = app.currentChartScope || 'all';
+            const scope = window.app.currentChartScope || 'all';
             
             // Calculate overall score using filtered data
             const overallScore = calculateOverallScore(scope);
@@ -427,7 +427,7 @@
             if (overallPercentageElement) overallPercentageElement.textContent = `${overallScore.percentage}%`;
             if (overallRatingElement) {
                 overallRatingElement.textContent = overallScore.rating;
-                const ratingDetails = app.getRatingDetails(overallScore.percentage);
+                const ratingDetails = window.app.getRatingDetails(overallScore.percentage);
                 overallRatingElement.style.color = ratingDetails.color;
             }
             if (totalItemsElement) {
@@ -455,7 +455,7 @@
     // Update audit status indicators
     function updateAuditStatusIndicators() {
         try {
-            const project = app.getCurrentProject();
+            const project = window.app.getCurrentProject();
             if (!project) return;
             
             // Update management audit status
@@ -530,12 +530,12 @@
             console.log('Initializing charts...');
             
             // Initialize app.charts if it doesn't exist
-            if (!app.charts) {
-                app.charts = {};
+            if (!window.app.charts) {
+                window.app.charts = {};
             }
             
             // Set default scope
-            app.currentChartScope = 'all';
+            window.app.currentChartScope = 'all';
             
             // Update dashboard
             updateDashboard();

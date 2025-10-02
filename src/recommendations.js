@@ -101,7 +101,7 @@
             console.log('Rendering dashboard recommendations...');
             const recommendationsContent = document.getElementById('recommendationsContent');
             if (recommendationsContent) {
-                const project = app.getCurrentProject();
+                const project = window.app.getCurrentProject();
                 if (!project) {
                     recommendationsContent.innerHTML = '<p>No project selected.</p>';
                     return;
