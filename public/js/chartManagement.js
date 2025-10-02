@@ -22,11 +22,12 @@
     // Helper function to get data based on scope
     function getDataByScope(scope) {
         let data = [];
+        const project = window.app.getCurrentProject();
+        if (!project) return data;
         
         if (scope === 'management') {
             // Get management data
-            const project = window.app.getCurrentProject();
-            if (project && project.managementSystemAudit) {
+            if (project.managementSystemAudit) {
                 for (const section in project.managementSystemAudit) {
                     if (Array.isArray(project.managementSystemAudit[section])) {
                         data = data.concat(project.managementSystemAudit[section]);
@@ -35,8 +36,7 @@
             }
         } else if (scope === 'all-sites') {
             // Get all sites data
-            const project = window.app.getCurrentProject();
-            if (project && project.sites) {
+            if (project.sites) {
                 for (const siteName in project.sites) {
                     const site = project.sites[siteName];
                     for (const section in site) {
@@ -47,9 +47,18 @@
                 }
             }
         } else {
-            // Get current site data (default)
-            const project = window.app.getCurrentProject();
-            if (project && project.currentSite && project.sites[project.currentSite]) {
+            // Get current site data + management data (default 'all')
+            // Add management system data
+            if (project.managementSystemAudit) {
+                for (const section in project.managementSystemAudit) {
+                    if (Array.isArray(project.managementSystemAudit[section])) {
+                        data = data.concat(project.managementSystemAudit[section]);
+                    }
+                }
+            }
+            
+            // Add current site data
+            if (project.currentSite && project.sites[project.currentSite]) {
                 const site = project.sites[project.currentSite];
                 for (const section in site) {
                     if (Array.isArray(site[section])) {
