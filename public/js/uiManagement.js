@@ -1221,4 +1221,13 @@
     window.editQuestion = editQuestion;
     window.deleteQuestion = deleteQuestion;
     window.updateAllDashboardComponents = updateAllDashboardComponents;
+    window.updateProjectsList = updateProjectsList;
+    window.updateSitesList = updateSitesList;
+    window.updateQuestionsList = updateQuestionsList;
+    window.switchToProject = switchToProject;
+    window.editProjectName = editProjectName;
+    window.deleteProject = deleteProject;
+    window.switchToSite = switchToSite;
+    window.editSiteName = editSiteName;
+    window.deleteSite = deleteSite;
 })();
