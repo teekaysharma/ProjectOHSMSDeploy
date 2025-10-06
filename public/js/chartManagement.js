@@ -863,7 +863,8 @@
             const mainScopeButtons = [
                 { id: 'chartScopeAll', scope: 'all' },
                 { id: 'chartScopeManagement', scope: 'management' },
-                { id: 'chartScopeAllSites', scope: 'all-sites' }
+                { id: 'chartScopeAllSites', scope: 'all-sites' },
+                { id: 'chartScopeTotal', scope: 'total' }
             ];
             
             mainScopeButtons.forEach(({ id, scope }) => {
