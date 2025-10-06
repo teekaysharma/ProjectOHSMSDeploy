@@ -1527,4 +1527,9 @@
     window.switchToSite = switchToSite;
     window.editSiteName = editSiteName;
     window.deleteSite = deleteSite;
+    window.addQuestionToSection = addQuestionToSection;
+    window.addSectionWithOptions = addSectionWithOptions;
+    window.editSectionName = editSectionName;
+    window.deleteSection = deleteSection;
+    window.moveQuestion = moveQuestion;
 })();
