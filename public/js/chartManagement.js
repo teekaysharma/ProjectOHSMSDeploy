@@ -124,17 +124,7 @@
                 }
             }
         } else {
-            // Get current site data + management data (default 'all')
-            // Add management system data
-            if (project.managementSystemAudit) {
-                for (const section in project.managementSystemAudit) {
-                    if (Array.isArray(project.managementSystemAudit[section])) {
-                        data = data.concat(project.managementSystemAudit[section]);
-                    }
-                }
-            }
-            
-            // Add current site data
+            // Get current site data only (default 'all' - current site only)
             if (project.currentSite && project.sites[project.currentSite]) {
                 const site = project.sites[project.currentSite];
                 for (const section in site) {
