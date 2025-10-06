@@ -1,61 +1,86 @@
 // Recommendations Module
 // Generates recommendations based on audit results
 
-// Generate recommendations based on scores
-function generateRecommendations(projectData, sitesData) {
-    const recommendations = [];
-    
-    // Analyze project-level issues
-    if (projectData && projectData.questions) {
-        const lowScoreQuestions = projectData.questions.filter(q => q.score <= 2 && q.score > 0);
+// Generate recommendations based on audit scores
+function generateRecommendations() {
+    try {
+        const recommendations = [];
+        const project = window.app.getCurrentProject();
         
-        lowScoreQuestions.forEach(question => {
-            const template = window.dataManagement?.getCurrentTemplate();
-            if (template && template.managementQuestions[question.index]) {
-                const questionText = template.managementQuestions[question.index].text;
-                recommendations.push({
-                    type: 'Management System',
-                    priority: question.score === 1 ? 'High' : 'Medium',
-                    issue: questionText,
-                    recommendation: getRecommendationForQuestion(questionText, question.score),
-                    score: question.score
-                });
+        if (!project) {
+            console.log('No project data available for recommendations');
+            return recommendations;
+        }
+
+        // Analyze Management System Audit data
+        if (project.managementSystemAudit) {
+            for (const section in project.managementSystemAudit) {
+                if (Array.isArray(project.managementSystemAudit[section])) {
+                    const sectionData = project.managementSystemAudit[section];
+                    const lowScoreItems = sectionData.filter(item => item.score <= 2 && item.score > 0);
+                    
+                    lowScoreItems.forEach(item => {
+                        recommendations.push({
+                            type: 'Management System',
+                            section: formatSectionName(section),
+                            priority: item.score === 1 ? 'High' : 'Medium',
+                            issue: item.name || 'Audit item requires attention',
+                            recommendation: getRecommendationForQuestion(item.name || '', item.score),
+                            score: item.score,
+                            comments: item.comments || ''
+                        });
+                    });
+                }
             }
-        });
-    }
-    
-    // Analyze site-level issues
-    if (sitesData && sitesData.length > 0) {
-        sitesData.forEach(site => {
-            if (site.questions) {
-                const lowScoreQuestions = site.questions.filter(q => q.score <= 2 && q.score > 0);
-                
-                lowScoreQuestions.forEach(question => {
-                    const template = window.dataManagement?.getCurrentTemplate();
-                    if (template && template.siteQuestions[question.index]) {
-                        const questionText = template.siteQuestions[question.index].text;
+        }
+
+        // Analyze Site Performance data
+        if (project.sites && project.currentSite && project.sites[project.currentSite]) {
+            const currentSite = project.sites[project.currentSite];
+            
+            for (const section in currentSite) {
+                if (Array.isArray(currentSite[section])) {
+                    const sectionData = currentSite[section];
+                    const lowScoreItems = sectionData.filter(item => item.score <= 2 && item.score > 0);
+                    
+                    lowScoreItems.forEach(item => {
                         recommendations.push({
                             type: 'Site Performance',
-                            site: site.name,
-                            priority: question.score === 1 ? 'High' : 'Medium',
-                            issue: questionText,
-                            recommendation: getRecommendationForQuestion(questionText, question.score),
-                            score: question.score
+                            site: project.currentSite,
+                            section: formatSectionName(section),
+                            priority: item.score === 1 ? 'High' : 'Medium',
+                            issue: item.name || 'Site audit item requires attention',
+                            recommendation: getRecommendationForQuestion(item.name || '', item.score),
+                            score: item.score,
+                            comments: item.comments || ''
                         });
-                    }
-                });
+                    });
+                }
             }
+        }
+
+        // Sort by priority and score
+        recommendations.sort((a, b) => {
+            if (a.priority === 'High' && b.priority !== 'High') return -1;
+            if (b.priority === 'High' && a.priority !== 'High') return 1;
+            return a.score - b.score;
         });
+
+        console.log('Generated recommendations:', recommendations);
+        return recommendations;
+        
+    } catch (error) {
+        console.error('Error generating recommendations:', error);
+        return [];
     }
-    
-    // Sort by priority and score
-    recommendations.sort((a, b) => {
-        if (a.priority === 'High' && b.priority !== 'High') return -1;
-        if (b.priority === 'High' && a.priority !== 'High') return 1;
-        return a.score - b.score;
-    });
-    
-    return recommendations;
+}
+
+// Helper function to format section names
+function formatSectionName(sectionName) {
+    return sectionName
+        .replace(/([A-Z])/g, ' $1')
+        .trim()
+        .replace(/^\w/, c => c.toUpperCase());
 }
 
 // Get specific recommendation based on question content and score
@@ -126,8 +151,11 @@ function getRecommendationForQuestion(questionText, score) {
 
 // Display recommendations in the UI
 function displayRecommendations(recommendations) {
-    const container = document.getElementById('recommendationsContainer');
-    if (!container) return;
+    const container = document.getElementById('recommendationsContent');
+    if (!container) {
+        console.warn('Recommendations container not found');
+        return;
+    }
     
     if (recommendations.length === 0) {
         container.innerHTML = '<p>No specific recommendations at this time. Continue monitoring and maintaining current standards.</p>';
@@ -187,9 +215,143 @@ function generateActionPlan(recommendations) {
     return actionPlan;
 }
 
+// Update recommendations display
+function updateRecommendations() {
+    try {
+        console.log('Updating recommendations...');
+        const recommendations = generateRecommendations();
+        displayRecommendations(recommendations);
+        
+        // Store recommendations for editing
+        if (window.app) {
+            window.app.currentRecommendations = recommendations;
+        }
+        
+    } catch (error) {
+        console.error('Error updating recommendations:', error);
+    }
+}
+
+// Generate sample recommendations for demonstration purposes
+function generateSampleRecommendations() {
+    return [
+        {
+            type: 'Management System',
+            section: 'Safety Policy',
+            priority: 'High',
+            issue: 'Safety policy documentation is incomplete or outdated',
+            recommendation: 'Immediately review and update safety policy documentation. Ensure all policies are current, comprehensive, and properly communicated to all staff members.',
+            score: 1
+        },
+        {
+            type: 'Site Performance',
+            site: 'Default Site',
+            section: 'Personal Protective Equipment',
+            priority: 'Medium',
+            issue: 'PPE inspection and maintenance procedures need improvement',
+            recommendation: 'Enhance PPE management processes. Implement regular inspection schedules and ensure proper training on use and maintenance of all personal protective equipment.',
+            score: 2
+        },
+        {
+            type: 'Management System',
+            section: 'Training And Competency',
+            priority: 'Medium',
+            issue: 'Training records and competency assessments require updating',
+            recommendation: 'Establish comprehensive training record system. Implement regular competency assessments and ensure all training activities are properly documented.',
+            score: 2
+        }
+    ];
+}
+
+// Initialize recommendations when page loads
+function initializeRecommendations() {
+    try {
+        console.log('Initializing recommendations...');
+        
+        // Set up edit functionality
+        setupRecommendationEditing();
+        
+        // Generate initial recommendations
+        updateRecommendations();
+        
+    } catch (error) {
+        console.error('Error initializing recommendations:', error);
+    }
+}
+
+// Set up recommendation editing functionality
+function setupRecommendationEditing() {
+    const editBtn = document.getElementById('editRecommendationsBtn');
+    const regenerateBtn = document.getElementById('regenerateRecommendationsBtn');
+    const saveBtn = document.getElementById('saveRecommendationsBtn');
+    const cancelBtn = document.getElementById('cancelEditRecommendationsBtn');
+    const content = document.getElementById('recommendationsContent');
+    
+    if (editBtn) {
+        editBtn.addEventListener('click', () => {
+            if (content) {
+                content.contentEditable = 'true';
+                content.style.border = '2px dashed #667eea';
+                content.focus();
+                
+                if (saveBtn) saveBtn.style.display = 'inline-block';
+                if (cancelBtn) cancelBtn.style.display = 'inline-block';
+            }
+        });
+    }
+    
+    if (regenerateBtn) {
+        regenerateBtn.addEventListener('click', () => {
+            updateRecommendations();
+        });
+    }
+    
+    const sampleBtn = document.getElementById('showSampleRecommendationsBtn');
+    if (sampleBtn) {
+        sampleBtn.addEventListener('click', () => {
+            const sampleRecommendations = generateSampleRecommendations();
+            displayRecommendations(sampleRecommendations);
+        });
+    }
+    
+    if (saveBtn) {
+        saveBtn.addEventListener('click', () => {
+            if (content) {
+                content.contentEditable = 'false';
+                content.style.border = '1px solid #ddd';
+                
+                // Store custom recommendations
+                if (window.app) {
+                    window.app.customRecommendations = content.innerHTML;
+                }
+                
+                saveBtn.style.display = 'none';
+                if (cancelBtn) cancelBtn.style.display = 'none';
+            }
+        });
+    }
+    
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', () => {
+            if (content) {
+                content.contentEditable = 'false';
+                content.style.border = '1px solid #ddd';
+                
+                // Restore original recommendations
+                updateRecommendations();
+                
+                saveBtn.style.display = 'none';
+                cancelBtn.style.display = 'none';
+            }
+        });
+    }
+}
+
 // Export functions for use in other modules
 window.recommendations = {
     generateRecommendations,
     displayRecommendations,
-    generateActionPlan
+    generateActionPlan,
+    updateRecommendations,
+    initializeRecommendations
 };

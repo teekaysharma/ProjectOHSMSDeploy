@@ -19,6 +19,9 @@
         // Initialize recommendations editing
         initializeRecommendationsEditing();
         
+        // Initialize management lists
+        initializeManagementLists();
+        
         // Show dashboard by default
         showTab('dashboard');
         
@@ -788,20 +791,159 @@
         }
     }
     
-    // Add new question
-    function addQuestion(type, section) {
+    // Add question to specific section with appropriate selection options
+    function addQuestionToSection(type, section) {
         try {
             const questionText = prompt('Enter the question text:');
             if (!questionText) return;
             
+            let applyToAll = true;
+            let specificTarget = null;
+            
+            if (type === 'management') {
+                // For management questions, ask about projects
+                const projects = getCurrentProjects();
+                if (projects.length > 1) {
+                    const choice = confirm(`Add this question to all projects?\n\nClick OK for ALL PROJECTS\nClick Cancel to choose a specific project`);
+                    if (!choice) {
+                        specificTarget = prompt(`Enter project name or choose from: ${projects.join(', ')}`);
+                        if (!specificTarget || !projects.includes(specificTarget)) {
+                            alert('Invalid project name. Question not added.');
+                            return;
+                        }
+                        applyToAll = false;
+                    }
+                }
+            } else if (type === 'site') {
+                // For site questions, ask about sites
+                const sites = getCurrentProjectSites();
+                if (sites.length > 1) {
+                    const choice = confirm(`Add this question to all sites?\n\nClick OK for ALL SITES\nClick Cancel to choose a specific site`);
+                    if (!choice) {
+                        specificTarget = prompt(`Enter site name or choose from: ${sites.join(', ')}`);
+                        if (!specificTarget || !sites.includes(specificTarget)) {
+                            alert('Invalid site name. Question not added.');
+                            return;
+                        }
+                        applyToAll = false;
+                    }
+                }
+            }
+            
             // Add to master config
+            if (!app.masterConfig[type][section]) {
+                app.masterConfig[type][section] = [];
+            }
             app.masterConfig[type][section].push(questionText);
             
-            // Update all projects with the new question
-            for (const projectName in app.inspectionData.projects) {
-                const project = app.inspectionData.projects[projectName];
+            // Update projects with the new question
+            updateProjectsWithNewQuestion(type, section, questionText, applyToAll, specificTarget);
+            
+            if (typeof saveData === 'function') {
+                saveData();
+            }
+            updateQuestionsList();
+            
+            const targetType = type === 'management' ? 'project' : 'site';
+            console.log(`Question added to ${type} - ${section}${specificTarget ? ` (${targetType}: ${specificTarget})` : ` (all ${targetType}s)`}`);
+        } catch (error) {
+            console.error('Error adding question:', error);
+        }
+    }
+    
+    // Legacy function for backward compatibility
+    function addQuestion(type, section) {
+        addQuestionToSection(type, section);
+    }
+    
+    // Add section with appropriate selection options
+    function addSectionWithOptions(type) {
+        try {
+            const inputId = `new${type.charAt(0).toUpperCase() + type.slice(1)}SectionName`;
+            const input = document.getElementById(inputId);
+            const sectionName = input.value.trim();
+            
+            if (!sectionName) {
+                alert('Please enter a section name');
+                return;
+            }
+            
+            if (app.masterConfig[type][sectionName]) {
+                alert('A section with this name already exists');
+                return;
+            }
+            
+            let applyToAll = true;
+            let specificTarget = null;
+            
+            if (type === 'management') {
+                // For management sections, handle project selection
+                const projects = getCurrentProjects();
+                if (projects.length > 1) {
+                    const choice = confirm(`Add this section to all projects?\n\nClick OK for ALL PROJECTS\nClick Cancel to choose a specific project`);
+                    if (!choice) {
+                        specificTarget = prompt(`Enter project name or choose from: ${projects.join(', ')}`);
+                        if (!specificTarget || !projects.includes(specificTarget)) {
+                            alert('Invalid project name. Section not added.');
+                            return;
+                        }
+                        applyToAll = false;
+                    }
+                }
+            } else if (type === 'site') {
+                // For site sections, handle site selection
+                const allSitesCheckbox = document.getElementById(`addTo${type.charAt(0).toUpperCase() + type.slice(1)}AllSites`);
+                const siteSelector = document.getElementById(`specific${type.charAt(0).toUpperCase() + type.slice(1)}Site`);
                 
-                if (type === 'management') {
+                if (allSitesCheckbox && siteSelector) {
+                    applyToAll = allSitesCheckbox.checked;
+                    if (!applyToAll) {
+                        specificTarget = siteSelector.value;
+                        if (!specificTarget) {
+                            alert('Please select a specific site or check "Add to all sites"');
+                            return;
+                        }
+                    }
+                }
+            }
+            
+            // Add new section to master config
+            app.masterConfig[type][sectionName] = [];
+            
+            // Update all projects with the new section
+            updateProjectsWithNewSection(type, sectionName, applyToAll, specificTarget);
+            
+            input.value = '';
+            if (typeof saveData === 'function') {
+                saveData();
+            }
+            updateQuestionsList();
+            
+            const targetType = type === 'management' ? 'project' : 'site';
+            console.log(`Section "${sectionName}" added to ${type}${specificTarget ? ` (${targetType}: ${specificTarget})` : ` (all ${targetType}s)`}`);
+        } catch (error) {
+            console.error('Error adding section:', error);
+        }
+    }
+    
+    // Helper functions for project updates
+    function getCurrentProjectSites() {
+        const project = window.app ? window.app.getCurrentProject() : null;
+        return project && project.sites ? Object.keys(project.sites) : [];
+    }
+    
+    function getCurrentProjects() {
+        return window.app && window.app.inspectionData && window.app.inspectionData.projects ? 
+               Object.keys(window.app.inspectionData.projects) : [];
+    }
+    
+    function updateProjectsWithNewQuestion(type, section, questionText, applyToAll, specificTarget) {
+        if (type === 'management') {
+            // Management questions are project-based
+            if (applyToAll) {
+                // Add to all projects
+                for (const projectName in app.inspectionData.projects) {
+                    const project = app.inspectionData.projects[projectName];
                     if (!project.managementSystemAudit[section]) {
                         project.managementSystemAudit[section] = [];
                     }
@@ -810,7 +952,26 @@
                         score: 0,
                         comment: ''
                     });
-                } else {
+                }
+            } else if (specificTarget && app.inspectionData.projects[specificTarget]) {
+                // Add to specific project only
+                const project = app.inspectionData.projects[specificTarget];
+                if (!project.managementSystemAudit[section]) {
+                    project.managementSystemAudit[section] = [];
+                }
+                project.managementSystemAudit[section].push({
+                    name: questionText,
+                    score: 0,
+                    comment: ''
+                });
+            }
+        } else {
+            // Site questions are site-based (within current project)
+            for (const projectName in app.inspectionData.projects) {
+                const project = app.inspectionData.projects[projectName];
+                
+                if (applyToAll) {
+                    // Add to all sites in this project
                     for (const siteName in project.sites) {
                         if (!project.sites[siteName][section]) {
                             project.sites[siteName][section] = [];
@@ -821,17 +982,173 @@
                             comment: ''
                         });
                     }
+                } else if (specificTarget && project.sites[specificTarget]) {
+                    // Add to specific site only
+                    if (!project.sites[specificTarget][section]) {
+                        project.sites[specificTarget][section] = [];
+                    }
+                    project.sites[specificTarget][section].push({
+                        name: questionText,
+                        score: 0,
+                        comment: ''
+                    });
+                }
+            }
+        }
+    }
+    
+    function updateProjectsWithNewSection(type, sectionName, applyToAll, specificTarget) {
+        if (type === 'management') {
+            // Management sections are project-based
+            if (applyToAll) {
+                // Add to all projects
+                for (const projectName in app.inspectionData.projects) {
+                    const project = app.inspectionData.projects[projectName];
+                    project.managementSystemAudit[sectionName] = [];
+                }
+            } else if (specificTarget && app.inspectionData.projects[specificTarget]) {
+                // Add to specific project only
+                const project = app.inspectionData.projects[specificTarget];
+                project.managementSystemAudit[sectionName] = [];
+            }
+        } else {
+            // Site sections are site-based (within all projects)
+            for (const projectName in app.inspectionData.projects) {
+                const project = app.inspectionData.projects[projectName];
+                
+                if (applyToAll) {
+                    // Add to all sites in this project
+                    for (const siteName in project.sites) {
+                        project.sites[siteName][sectionName] = [];
+                    }
+                } else if (specificTarget && project.sites[specificTarget]) {
+                    // Add to specific site only
+                    project.sites[specificTarget][sectionName] = [];
+                }
+            }
+        }
+    }
+    
+    // New enhanced functions
+    function editSectionName(type, oldSectionName) {
+        try {
+            const newSectionName = prompt('Enter new section name:', oldSectionName);
+            if (!newSectionName || newSectionName === oldSectionName) return;
+            
+            if (app.masterConfig[type][newSectionName]) {
+                alert('A section with this name already exists');
+                return;
+            }
+            
+            // Update master config
+            app.masterConfig[type][newSectionName] = app.masterConfig[type][oldSectionName];
+            delete app.masterConfig[type][oldSectionName];
+            
+            // Update all projects
+            for (const projectName in app.inspectionData.projects) {
+                const project = app.inspectionData.projects[projectName];
+                
+                if (type === 'management') {
+                    if (project.managementSystemAudit[oldSectionName]) {
+                        project.managementSystemAudit[newSectionName] = project.managementSystemAudit[oldSectionName];
+                        delete project.managementSystemAudit[oldSectionName];
+                    }
+                } else {
+                    for (const siteName in project.sites) {
+                        if (project.sites[siteName][oldSectionName]) {
+                            project.sites[siteName][newSectionName] = project.sites[siteName][oldSectionName];
+                            delete project.sites[siteName][oldSectionName];
+                        }
+                    }
                 }
             }
             
             if (typeof saveData === 'function') {
                 saveData();
             }
-            renderQuestionManagement();
+            updateQuestionsList();
             
-            console.log(`Question added to ${type} - ${section}`);
+            console.log(`Section renamed from "${oldSectionName}" to "${newSectionName}"`);
         } catch (error) {
-            console.error('Error adding question:', error);
+            console.error('Error editing section name:', error);
+        }
+    }
+    
+    function deleteSection(type, sectionName) {
+        try {
+            if (!confirm(`Are you sure you want to delete section "${sectionName}" and all its questions?\n\nThis action cannot be undone.`)) {
+                return;
+            }
+            
+            // Remove from master config
+            delete app.masterConfig[type][sectionName];
+            
+            // Remove from all projects
+            for (const projectName in app.inspectionData.projects) {
+                const project = app.inspectionData.projects[projectName];
+                
+                if (type === 'management') {
+                    delete project.managementSystemAudit[sectionName];
+                } else {
+                    for (const siteName in project.sites) {
+                        delete project.sites[siteName][sectionName];
+                    }
+                }
+            }
+            
+            if (typeof saveData === 'function') {
+                saveData();
+            }
+            updateQuestionsList();
+            
+            console.log(`Section "${sectionName}" deleted from ${type}`);
+        } catch (error) {
+            console.error('Error deleting section:', error);
+        }
+    }
+    
+    function moveQuestion(type, section, index) {
+        try {
+            const questions = app.masterConfig[type][section];
+            const questionText = questions[index];
+            const newPosition = prompt(`Move question "${questionText}" to position (1-${questions.length}):`);
+            
+            if (!newPosition || isNaN(newPosition)) return;
+            
+            const newIndex = parseInt(newPosition) - 1;
+            if (newIndex < 0 || newIndex >= questions.length || newIndex === index) return;
+            
+            // Move in master config
+            questions.splice(index, 1);
+            questions.splice(newIndex, 0, questionText);
+            
+            // Update all projects
+            for (const projectName in app.inspectionData.projects) {
+                const project = app.inspectionData.projects[projectName];
+                
+                if (type === 'management') {
+                    if (project.managementSystemAudit[section]) {
+                        const item = project.managementSystemAudit[section].splice(index, 1)[0];
+                        project.managementSystemAudit[section].splice(newIndex, 0, item);
+                    }
+                } else {
+                    for (const siteName in project.sites) {
+                        if (project.sites[siteName][section]) {
+                            const item = project.sites[siteName][section].splice(index, 1)[0];
+                            project.sites[siteName][section].splice(newIndex, 0, item);
+                        }
+                    }
+                }
+            }
+            
+            if (typeof saveData === 'function') {
+                saveData();
+            }
+            updateQuestionsList();
+            
+            console.log(`Question moved from position ${index + 1} to ${newIndex + 1}`);
+        } catch (error) {
+            console.error('Error moving question:', error);
         }
     }
     
@@ -940,6 +1257,508 @@
         }
     }
     
+    // Initialize management lists
+    function initializeManagementLists() {
+        try {
+            console.log('Initializing management lists...');
+            
+            // Initialize refresh buttons
+            const refreshQuestionsBtn = document.getElementById('refreshQuestionsBtn');
+            if (refreshQuestionsBtn) {
+                refreshQuestionsBtn.addEventListener('click', () => {
+                    updateQuestionsList();
+                });
+            }
+            
+            const refreshProjectsBtn = document.getElementById('refreshProjectsBtn');
+            if (refreshProjectsBtn) {
+                refreshProjectsBtn.addEventListener('click', () => {
+                    updateProjectSelector();
+                    updateSiteSelector();
+                    updateProjectsList();
+                    updateSitesList();
+                    console.log('Manual refresh triggered for projects, sites, and selectors');
+                });
+            }
+            
+            // Initialize questions tab switching
+            initializeQuestionsTabSwitching();
+            
+            // Update lists when tab is shown
+            setTimeout(() => {
+                updateProjectSelector();
+                updateSiteSelector();
+                updateProjectsList();
+                updateSitesList();
+                updateQuestionsList();
+            }, 1000);
+            
+            // Also update when System Settings tab is clicked
+            const systemSettingsTab = document.querySelector('button[data-tab-name="master"]');
+            if (systemSettingsTab) {
+                systemSettingsTab.addEventListener('click', () => {
+                    setTimeout(() => {
+                        updateProjectSelector();
+                        updateSiteSelector();
+                        updateProjectsList();
+                        updateSitesList();
+                        updateQuestionsList();
+                    }, 500);
+                });
+            }
+            
+            console.log('Management lists initialized successfully');
+        } catch (error) {
+            console.error('Error initializing management lists:', error);
+        }
+    }
+    
+    // Update header project selector dropdown
+    function updateProjectSelector() {
+        try {
+            const projectSelector = document.getElementById('projectSelector');
+            if (!projectSelector) return;
+            
+            const projects = getCurrentProjects();
+            if (projects.length === 0) {
+                projectSelector.innerHTML = '<option value="">No projects available</option>';
+                return;
+            }
+            
+            let html = '<option value="">Select a project</option>';
+            const currentProjectName = window.app && window.app.currentProject ? window.app.currentProject : '';
+            
+            projects.forEach(projectName => {
+                const selected = currentProjectName === projectName ? 'selected' : '';
+                html += `<option value="${projectName}" ${selected}>${projectName}</option>`;
+            });
+            
+            projectSelector.innerHTML = html;
+            
+            // Add event listener for project selection changes
+            projectSelector.onchange = (e) => {
+                if (e.target.value && window.app) {
+                    window.app.currentProject = e.target.value;
+                    if (window.app.saveData) window.app.saveData();
+                    
+                    // Update site selector for new project
+                    updateSiteSelector();
+                    
+                    // Update dashboard and charts
+                    if (typeof updateAllDashboardComponents === 'function') {
+                        updateAllDashboardComponents();
+                    }
+                    
+                    // Update management lists
+                    updateProjectsList();
+                    updateSitesList();
+                    
+                    console.log('Switched to project:', e.target.value);
+                }
+            };
+            
+        } catch (error) {
+            console.error('Error updating project selector:', error);
+        }
+    }
+
+    // Update projects list
+    function updateProjectsList() {
+        try {
+            const container = document.getElementById('projectListContainer');
+            if (!container) return;
+            
+            const projects = window.app && window.app.inspectionData && window.app.inspectionData.projects ? 
+                            Object.keys(window.app.inspectionData.projects) : [];
+            
+            if (projects.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No projects created yet. Use the "Add New Project" button to create your first project.</div>';
+                return;
+            }
+            
+            let html = '';
+            projects.forEach(projectName => {
+                const project = window.app.inspectionData.projects[projectName];
+                const sitesCount = project.sites ? Object.keys(project.sites).length : 0;
+                const currentProject = window.app.currentProject === projectName;
+                
+                html += `
+                    <div class="project-item ${currentProject ? 'current' : ''}">
+                        <div class="project-info">
+                            <div class="project-name">${projectName} ${currentProject ? '(Current)' : ''}</div>
+                            <div class="project-details">${sitesCount} site(s) • Lead Auditor: ${project.leadAuditor || 'Not set'}</div>
+                        </div>
+                        <div class="project-actions">
+                            ${!currentProject ? `<button class="btn btn-sm btn-secondary" onclick="switchToProject('${projectName}')">Switch To</button>` : ''}
+                            <button class="btn btn-sm btn-secondary" onclick="editProjectName('${projectName}')">Edit</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteProject('${projectName}')">Delete</button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        } catch (error) {
+            console.error('Error updating projects list:', error);
+        }
+    }
+    
+    // Update header site selector dropdown
+    function updateSiteSelector() {
+        try {
+            const siteSelector = document.getElementById('siteSelector');
+            if (!siteSelector) return;
+            
+            const project = window.app ? window.app.getCurrentProject() : null;
+            if (!project || !project.sites) {
+                siteSelector.innerHTML = '<option value="">No sites available</option>';
+                return;
+            }
+            
+            const sites = Object.keys(project.sites);
+            let html = '<option value="">Select a site</option>';
+            
+            sites.forEach(siteName => {
+                const selected = project.currentSite === siteName ? 'selected' : '';
+                html += `<option value="${siteName}" ${selected}>${siteName}</option>`;
+            });
+            
+            siteSelector.innerHTML = html;
+            
+            // Add event listener for site selection changes
+            siteSelector.onchange = (e) => {
+                if (e.target.value && window.app) {
+                    const currentProject = window.app.getCurrentProject();
+                    if (currentProject) {
+                        currentProject.currentSite = e.target.value;
+                        if (window.app.saveData) window.app.saveData();
+                        // Update dashboard and charts
+                        if (typeof updateAllDashboardComponents === 'function') {
+                            updateAllDashboardComponents();
+                        }
+                        console.log('Switched to site:', e.target.value);
+                    }
+                }
+            };
+            
+        } catch (error) {
+            console.error('Error updating site selector:', error);
+        }
+    }
+
+    // Update sites list
+    function updateSitesList() {
+        try {
+            const container = document.getElementById('siteListContainer');
+            if (!container) return;
+            
+            const project = window.app ? window.app.getCurrentProject() : null;
+            if (!project || !project.sites) {
+                container.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No sites found. Add a site using the form above.</div>';
+                return;
+            }
+            
+            const sites = Object.keys(project.sites);
+            if (sites.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No sites created yet. Add a site using the form above.</div>';
+                return;
+            }
+            
+            let html = '';
+            sites.forEach(siteName => {
+                const currentSite = project.currentSite === siteName;
+                
+                html += `
+                    <div class="site-item ${currentSite ? 'current' : ''}">
+                        <div class="site-name">${siteName} ${currentSite ? '(Current)' : ''}</div>
+                        <div class="site-actions">
+                            ${!currentSite ? `<button class="btn btn-sm btn-secondary" onclick="switchToSite('${siteName}')">Switch To</button>` : ''}
+                            <button class="btn btn-sm btn-secondary" onclick="editSiteName('${siteName}')">Edit</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteSite('${siteName}')">Delete</button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        } catch (error) {
+            console.error('Error updating sites list:', error);
+        }
+    }
+    
+    // Initialize questions tab switching
+    function initializeQuestionsTabSwitching() {
+        try {
+            const tabs = document.querySelectorAll('.questions-tab');
+            const panels = document.querySelectorAll('.questions-panel');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Remove active class from all tabs and panels
+                    tabs.forEach(t => t.classList.remove('active'));
+                    panels.forEach(p => p.classList.remove('active'));
+                    
+                    // Add active class to clicked tab
+                    tab.classList.add('active');
+                    
+                    // Show corresponding panel
+                    const tabName = tab.dataset.questionsTab;
+                    const targetPanel = document.getElementById(`${tabName}QuestionsPanel`);
+                    if (targetPanel) {
+                        targetPanel.classList.add('active');
+                    }
+                });
+            });
+            
+            console.log('Questions tab switching initialized');
+        } catch (error) {
+            console.error('Error initializing questions tab switching:', error);
+        }
+    }
+
+    // Update questions list with proper numbering and section organization
+    function updateQuestionsList() {
+        try {
+            const managementContainer = document.getElementById('managementQuestionsContainer');
+            const siteContainer = document.getElementById('siteQuestionsContainer');
+            
+            if (!managementContainer || !siteContainer) return;
+            
+            const masterConfig = window.app && window.app.masterConfig ? window.app.masterConfig : null;
+            if (!masterConfig) {
+                managementContainer.innerHTML = '<div style="text-align: center; color: #666; padding: 40px;">No template loaded. Use "Load Default Template" to load questions.</div>';
+                siteContainer.innerHTML = '<div style="text-align: center; color: #666; padding: 40px;">No template loaded. Use "Load Default Template" to load questions.</div>';
+                updateQuestionCounts(0, 0);
+                return;
+            }
+            
+            let managementQuestionCount = 0;
+            let siteQuestionCount = 0;
+            
+            // Update management questions with section organization
+            if (masterConfig.management) {
+                let managementHtml = renderQuestionsWithSections('management', masterConfig.management);
+                managementContainer.innerHTML = managementHtml;
+                // Count total management questions
+                for (const section in masterConfig.management) {
+                    managementQuestionCount += masterConfig.management[section].length;
+                }
+            }
+            
+            // Update site questions with section organization
+            if (masterConfig.site) {
+                let siteHtml = renderQuestionsWithSections('site', masterConfig.site);
+                siteContainer.innerHTML = siteHtml;
+                // Count total site questions
+                for (const section in masterConfig.site) {
+                    siteQuestionCount += masterConfig.site[section].length;
+                }
+            }
+            
+            // Update tab counts
+            updateQuestionCounts(managementQuestionCount, siteQuestionCount);
+        } catch (error) {
+            console.error('Error updating questions list:', error);
+        }
+    }
+    
+    // Update question counts in tab headers
+    function updateQuestionCounts(managementCount, siteCount) {
+        const managementCountElement = document.getElementById('managementQuestionsCount');
+        const siteCountElement = document.getElementById('siteQuestionsCount');
+        
+        if (managementCountElement) {
+            managementCountElement.textContent = `(${managementCount})`;
+        }
+        if (siteCountElement) {
+            siteCountElement.textContent = `(${siteCount})`;
+        }
+    }
+    
+    // Render questions organized by sections with proper numbering
+    function renderQuestionsWithSections(type, config) {
+        let html = '';
+        let sectionNumber = 1;
+        let totalQuestions = 0;
+        
+        for (const section in config) {
+            const questions = config[section];
+            totalQuestions += questions.length;
+            
+            // Section header with number and controls
+            html += `
+                <div class="question-section-group">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <span class="section-number">${sectionNumber}.</span>
+                            <span class="section-name">${formatSectionName(section)}</span>
+                            <span class="section-count">(${questions.length} questions)</span>
+                        </div>
+                        <div class="section-actions">
+                            <button class="btn btn-sm btn-green" onclick="addQuestionToSection('${type}', '${section}')">Add Question</button>
+                            <button class="btn btn-sm btn-secondary" onclick="editSectionName('${type}', '${section}')">Edit Section</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteSection('${type}', '${section}')">Delete Section</button>
+                        </div>
+                    </div>
+                    
+                    <div class="questions-in-section">
+            `;
+            
+            // Questions within the section
+            if (questions.length === 0) {
+                html += '<div class="no-questions">No questions in this section. Click "Add Question" to add one.</div>';
+            } else {
+                questions.forEach((question, index) => {
+                    const questionNumber = `${sectionNumber}.${index + 1}`;
+                    html += `
+                        <div class="question-item-detailed">
+                            <div class="question-number">${questionNumber}</div>
+                            <div class="question-content-full">
+                                <div class="question-text-full">${question}</div>
+                                <div class="question-meta-full">
+                                    Section: ${formatSectionName(section)} • Position: ${index + 1} of ${questions.length}
+                                </div>
+                            </div>
+                            <div class="question-actions-full">
+                                <button class="btn btn-sm btn-secondary" onclick="editQuestion('${type}', '${section}', ${index})">
+                                    <span>✏️</span> Edit
+                                </button>
+                                <button class="btn btn-sm btn-orange" onclick="moveQuestion('${type}', '${section}', ${index})">
+                                    <span>↕️</span> Move
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteQuestion('${type}', '${section}', ${index})">
+                                    <span>🗑️</span> Delete
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            
+            html += `
+                    </div>
+                </div>
+            `;
+            
+            sectionNumber++;
+        }
+        
+        // Add section controls at the bottom
+        html += `
+            <div class="add-section-controls">
+                <h4>Add New Section</h4>
+                <div class="add-section-form">
+                    <input type="text" id="new${type.charAt(0).toUpperCase() + type.slice(1)}SectionName" placeholder="Enter section name" class="section-name-input">
+                    ${type === 'site' ? `
+                        <div class="add-section-options">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="addTo${type.charAt(0).toUpperCase() + type.slice(1)}AllSites" checked>
+                                <span>Add to all sites</span>
+                            </label>
+                            <select id="specific${type.charAt(0).toUpperCase() + type.slice(1)}Site" class="site-selector-small" style="display: none;">
+                                <option value="">Select specific site</option>
+                            </select>
+                        </div>
+                    ` : ''}
+                    <button class="btn btn-green" onclick="addSectionWithOptions('${type}')">Add Section</button>
+                    ${type === 'management' ? '<p class="help-text">Management sections will be added based on project selection during creation.</p>' : ''}
+                </div>
+            </div>
+            
+            <div class="questions-summary">
+                <strong>Total: ${Object.keys(config).length} sections, ${totalQuestions} questions</strong>
+            </div>
+        `;
+        
+        if (totalQuestions === 0) {
+            html = '<div style="text-align: center; color: #666; padding: 40px;">No questions found. Use "Load Default Template" to load questions or add sections manually.</div>';
+        }
+        
+        return html;
+    }
+    
+    // Format section name for display
+    function formatSectionName(sectionName) {
+        return sectionName
+            .replace(/([A-Z])/g, ' $1')
+            .trim()
+            .replace(/^\w/, c => c.toUpperCase());
+    }
+    
+    // Project management functions
+    function switchToProject(projectName) {
+        if (window.app && window.app.switchToProject) {
+            window.app.switchToProject(projectName);
+            updateProjectsList();
+            updateSitesList();
+            updateAllDashboardComponents();
+        }
+    }
+    
+    function editProjectName(projectName) {
+        const newName = prompt('Enter new project name:', projectName);
+        if (newName && newName !== projectName && window.app) {
+            // Implementation would depend on the app's project management system
+            alert('Project renaming functionality to be implemented');
+        }
+    }
+    
+    function deleteProject(projectName) {
+        if (confirm(`Are you sure you want to delete project "${projectName}"? This action cannot be undone.`)) {
+            // Implementation would depend on the app's project management system
+            alert('Project deletion functionality to be implemented');
+        }
+    }
+    
+    // Site management functions
+    function switchToSite(siteName) {
+        if (window.app && window.app.getCurrentProject) {
+            const project = window.app.getCurrentProject();
+            if (project) {
+                project.currentSite = siteName;
+                if (window.app.saveData) window.app.saveData();
+                updateSitesList();
+                updateAllDashboardComponents();
+            }
+        }
+    }
+    
+    function editSiteName(siteName) {
+        const newName = prompt('Enter new site name:', siteName);
+        if (newName && newName !== siteName && window.app) {
+            const project = window.app.getCurrentProject();
+            if (project && project.sites) {
+                project.sites[newName] = project.sites[siteName];
+                delete project.sites[siteName];
+                if (project.currentSite === siteName) {
+                    project.currentSite = newName;
+                }
+                if (window.app.saveData) window.app.saveData();
+                updateSitesList();
+                updateAllDashboardComponents();
+            }
+        }
+    }
+    
+    function deleteSite(siteName) {
+        if (confirm(`Are you sure you want to delete site "${siteName}"? This action cannot be undone.`)) {
+            if (window.app) {
+                const project = window.app.getCurrentProject();
+                if (project && project.sites) {
+                    delete project.sites[siteName];
+                    // If this was the current site, switch to the first available site
+                    if (project.currentSite === siteName) {
+                        const remainingSites = Object.keys(project.sites);
+                        project.currentSite = remainingSites.length > 0 ? remainingSites[0] : null;
+                    }
+                    if (window.app.saveData) window.app.saveData();
+                    updateSitesList();
+                    updateAllDashboardComponents();
+                }
+            }
+        }
+    }
+    
     // Expose functions to global scope
     window.initializeUI = initializeUI;
     window.showTab = showTab;
@@ -954,4 +1773,22 @@
     window.editQuestion = editQuestion;
     window.deleteQuestion = deleteQuestion;
     window.updateAllDashboardComponents = updateAllDashboardComponents;
+    window.updateProjectSelector = updateProjectSelector;
+    window.updateSiteSelector = updateSiteSelector;
+    window.updateProjectsList = updateProjectsList;
+    window.updateSitesList = updateSitesList;
+    window.updateQuestionsList = updateQuestionsList;
+    window.switchToProject = switchToProject;
+    window.editProjectName = editProjectName;
+    window.deleteProject = deleteProject;
+    window.switchToSite = switchToSite;
+    window.editSiteName = editSiteName;
+    window.deleteSite = deleteSite;
+    window.addQuestionToSection = addQuestionToSection;
+    window.addSectionWithOptions = addSectionWithOptions;
+    window.editSectionName = editSectionName;
+    window.deleteSection = deleteSection;
+    window.moveQuestion = moveQuestion;
+    window.initializeQuestionsTabSwitching = initializeQuestionsTabSwitching;
+    window.updateQuestionCounts = updateQuestionCounts;
 })();

@@ -3,52 +3,617 @@
 
 // Generate comprehensive audit report
 function generateAuditReport() {
-    const projectData = window.projectManagement?.getCurrentProject();
-    const sitesData = window.siteManagement?.getCurrentSites();
-    const template = window.dataManagement?.getCurrentTemplate();
-    
-    if (!projectData && (!sitesData || sitesData.length === 0)) {
-        alert('No audit data available to generate report.');
-        return;
+    try {
+        const project = window.app ? window.app.getCurrentProject() : null;
+        
+        if (!project) {
+            alert('No audit data available to generate report.');
+            return null;
+        }
+        
+        const report = {
+            metadata: {
+                generatedDate: new Date().toISOString(),
+                generatedBy: 'OHS Management System Audit Tool',
+                version: '2.3',
+                reportTitle: document.getElementById('reportTitle')?.value || 'OCCUPATIONAL HEALTH & SAFETY AUDIT REPORT',
+                reportSubtitle: document.getElementById('reportSubtitle')?.value || 'Management System & Site Performance Audit',
+                companyName: document.getElementById('companyName')?.value || '',
+                reportDescription: document.getElementById('reportDescription')?.value || ''
+            },
+            project: project,
+            summary: generateReportSummary(project),
+            recommendations: window.recommendations?.generateRecommendations() || [],
+            charts: captureChartsForReport()
+        };
+        
+        return report;
+    } catch (error) {
+        console.error('Error generating audit report:', error);
+        alert('Error generating report. Please check the console for details.');
+        return null;
     }
-    
-    const report = {
-        metadata: {
-            generatedDate: new Date().toISOString(),
-            generatedBy: 'OHS Management System Audit Tool',
-            version: '2.3'
-        },
-        project: projectData,
-        sites: sitesData,
-        summary: generateSummary(projectData, sitesData),
-        recommendations: window.recommendations?.generateRecommendations(projectData, sitesData) || []
-    };
-    
-    return report;
 }
 
-// Generate summary statistics
-function generateSummary(projectData, sitesData) {
-    const summary = {
-        totalSites: sitesData ? sitesData.length : 0,
-        completedSites: sitesData ? sitesData.filter(site => site.completed).length : 0,
-        averageSiteScore: 0,
-        projectScore: projectData ? projectData.score : 0,
-        overallCompliance: 0,
-        criticalIssues: 0,
-        recommendations: 0
-    };
-    
-    // Calculate average site score
-    if (sitesData && sitesData.length > 0) {
-        const completedSites = sitesData.filter(site => site.completed);
-        if (completedSites.length > 0) {
-            summary.averageSiteScore = Math.round(
-                completedSites.reduce((sum, site) => sum + site.score, 0) / completedSites.length
-            );
+// Generate comprehensive summary for report
+function generateReportSummary(project) {
+    try {
+        const summary = {
+            projectName: project.projectName || 'Default Project',
+            currentSite: project.currentSite || 'Default Site',
+            totalSites: project.sites ? Object.keys(project.sites).length : 0,
+            inspectionDate: document.getElementById('inspectionDate')?.value || new Date().toISOString().split('T')[0],
+            leadAuditor: project.leadAuditor || document.getElementById('leadAuditor')?.value || 'Not specified',
+            projectDirector: project.projectDirector || document.getElementById('projectDirector')?.value || 'Not specified',
+            overallScores: {},
+            siteScores: {},
+            managementScore: 0,
+            criticalIssues: [],
+            recommendations: 0
+        };
+        
+        // Calculate management system score
+        if (project.managementSystemAudit) {
+            let totalManagementScore = 0;
+            let totalManagementQuestions = 0;
+            
+            for (const section in project.managementSystemAudit) {
+                if (Array.isArray(project.managementSystemAudit[section])) {
+                    project.managementSystemAudit[section].forEach(item => {
+                        if (item.score > 0) {
+                            totalManagementScore += item.score;
+                            totalManagementQuestions++;
+                        }
+                        if (item.score === 1) {
+                            summary.criticalIssues.push({
+                                type: 'Management System',
+                                section: section,
+                                issue: item.name
+                            });
+                        }
+                    });
+                }
+            }
+            
+            summary.managementScore = totalManagementQuestions > 0 ? 
+                Math.round((totalManagementScore / totalManagementQuestions) * 100) / 100 : 0;
         }
+        
+        // Calculate site scores
+        if (project.sites) {
+            for (const siteName in project.sites) {
+                const site = project.sites[siteName];
+                let totalSiteScore = 0;
+                let totalSiteQuestions = 0;
+                
+                for (const section in site) {
+                    if (Array.isArray(site[section])) {
+                        site[section].forEach(item => {
+                            if (item.score > 0) {
+                                totalSiteScore += item.score;
+                                totalSiteQuestions++;
+                            }
+                            if (item.score === 1) {
+                                summary.criticalIssues.push({
+                                    type: 'Site Performance',
+                                    site: siteName,
+                                    section: section,
+                                    issue: item.name
+                                });
+                            }
+                        });
+                    }
+                }
+                
+                summary.siteScores[siteName] = totalSiteQuestions > 0 ? 
+                    Math.round((totalSiteScore / totalSiteQuestions) * 100) / 100 : 0;
+            }
+        }
+        
+        // Calculate overall scores using chart management functions
+        if (window.chartManagement && window.chartManagement.calculateOverallScore) {
+            summary.overallScores = {
+                management: window.chartManagement.calculateOverallScore('management'),
+                currentSite: window.chartManagement.calculateOverallScore('all'),
+                allSites: window.chartManagement.calculateOverallScore('all-sites'),
+                projectOverview: window.chartManagement.calculateOverallScore('total')
+            };
+        }
+        
+        return summary;
+    } catch (error) {
+        console.error('Error generating report summary:', error);
+        return {
+            projectName: 'Unknown Project',
+            totalSites: 0,
+            managementScore: 0,
+            siteScores: {},
+            criticalIssues: [],
+            overallScores: {}
+        };
     }
     
+// Create Executive Report HTML with A4 print layout
+function createExecutiveReportHTML(report) {
+    const logoHTML = window.reportLogoData ? 
+        `<img src="${window.reportLogoData}" alt="Company Logo" class="company-logo">` : '';
+    
+    return `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>${report.metadata.reportTitle}</title>
+        <style>
+            ${getReportCSS()}
+        </style>
+    </head>
+    <body>
+        <div class="report-container">
+            <!-- Report Header -->
+            <header class="report-header">
+                <div class="header-content">
+                    <div class="header-text">
+                        <h1 class="report-title">${report.metadata.reportTitle}</h1>
+                        <h2 class="report-subtitle">${report.metadata.reportSubtitle}</h2>
+                        <div class="company-info">
+                            <h3>${report.metadata.companyName}</h3>
+                            <p>${report.metadata.reportDescription}</p>
+                        </div>
+                    </div>
+                    <div class="header-logo">
+                        ${logoHTML}
+                    </div>
+                </div>
+                <div class="report-meta">
+                    <div class="meta-row">
+                        <span><strong>Project:</strong> ${report.summary.projectName}</span>
+                        <span><strong>Date:</strong> ${new Date(report.metadata.generatedDate).toLocaleDateString()}</span>
+                    </div>
+                    <div class="meta-row">
+                        <span><strong>Lead Auditor:</strong> ${report.summary.leadAuditor}</span>
+                        <span><strong>Project Director:</strong> ${report.summary.projectDirector}</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Executive Summary -->
+            <section class="executive-summary">
+                <h2>Executive Summary</h2>
+                <div class="summary-grid">
+                    ${generateSummaryHTML(report.summary)}
+                </div>
+                ${generateScoreCardsHTML(report.summary)}
+            </section>
+
+            <!-- Charts Section -->
+            <section class="charts-section">
+                <h2>Performance Analysis</h2>
+                ${generateChartsHTML(report.charts)}
+            </section>
+
+            <!-- Critical Issues -->
+            ${generateCriticalIssuesHTML(report.summary.criticalIssues)}
+
+            <!-- Recommendations -->
+            ${generateRecommendationsHTML(report.recommendations)}
+
+            <!-- Footer -->
+            <footer class="report-footer">
+                <p>Generated by ${report.metadata.generatedBy} v${report.metadata.version}</p>
+                <p>Report generated on ${new Date(report.metadata.generatedDate).toLocaleString()}</p>
+            </footer>
+        </div>
+
+        <script>
+            // Print functionality
+            function printReport() {
+                window.print();
+            }
+            
+            // Add print button
+            const printBtn = document.createElement('button');
+            printBtn.textContent = 'Print Report';
+            printBtn.className = 'print-btn no-print';
+            printBtn.onclick = printReport;
+            document.body.appendChild(printBtn);
+        </script>
+    </body>
+    </html>
+    `;
+}
+
+// Create Full HTML Report (same as executive but with more details)
+function createFullHTMLReport(report) {
+    return createExecutiveReportHTML(report);
+}
+
+// Display report in new window
+function displayReportInNewWindow(htmlContent, title) {
+    const newWindow = window.open('', '_blank');
+    if (newWindow) {
+        newWindow.document.write(htmlContent);
+        newWindow.document.close();
+        newWindow.focus();
+    } else {
+        alert('Please allow pop-ups to view the report in a new window');
+    }
+}
+
+// Generate report CSS for A4 print layout
+function getReportCSS() {
+    return `
+        @page {
+            size: A4;
+            margin: 15mm;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: white;
+        }
+        
+        .report-container {
+            max-width: 210mm;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+        }
+        
+        .report-header {
+            border-bottom: 3px solid #4c51bf;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+        
+        .header-text {
+            flex: 1;
+        }
+        
+        .report-title {
+            font-size: 24px;
+            color: #4c51bf;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+        
+        .report-subtitle {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+        
+        .company-info h3 {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .company-info p {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .header-logo {
+            margin-left: 20px;
+        }
+        
+        .company-logo {
+            max-width: 120px;
+            max-height: 80px;
+            object-fit: contain;
+        }
+        
+        .report-meta {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        
+        .meta-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        
+        .meta-row:last-child {
+            margin-bottom: 0;
+        }
+        
+        h2 {
+            color: #4c51bf;
+            font-size: 20px;
+            margin: 30px 0 15px 0;
+            border-left: 4px solid #4c51bf;
+            padding-left: 10px;
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .summary-card {
+            background: #f8f9ff;
+            border: 1px solid #e0e6ed;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .summary-card h3 {
+            color: #4c51bf;
+            font-size: 14px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .summary-card .value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .summary-card .label {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .score-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .score-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .score-card h4 {
+            font-size: 14px;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+        
+        .score-card .score {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .score-card .rating {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        
+        .charts-section img {
+            max-width: 100%;
+            height: auto;
+            margin: 15px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        
+        .critical-issues {
+            background: #fee;
+            border: 1px solid #fcc;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .critical-issues h3 {
+            color: #c53030;
+            margin-bottom: 15px;
+        }
+        
+        .issue-item {
+            background: white;
+            border-left: 4px solid #c53030;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .recommendations-section {
+            background: #f0f8ff;
+            border: 1px solid #bde4ff;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .recommendation-item {
+            background: white;
+            border-left: 4px solid #4299e1;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .report-footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+        }
+        
+        .print-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4c51bf;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(76, 81, 191, 0.3);
+            transition: all 0.2s ease;
+        }
+        
+        .print-btn:hover {
+            background: #3c4099;
+            transform: translateY(-2px);
+        }
+        
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            
+            .report-container {
+                max-width: none;
+                margin: 0;
+                padding: 0;
+            }
+            
+            body {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    `;
+}
+
+// Generate summary HTML section
+function generateSummaryHTML(summary) {
+    return `
+        <div class="summary-card">
+            <h3>Total Sites</h3>
+            <div class="value">${summary.totalSites}</div>
+            <div class="label">Audited Locations</div>
+        </div>
+        <div class="summary-card">
+            <h3>Management Score</h3>
+            <div class="value">${summary.managementScore}</div>
+            <div class="label">System Performance</div>
+        </div>
+        <div class="summary-card">
+            <h3>Critical Issues</h3>
+            <div class="value">${summary.criticalIssues.length}</div>
+            <div class="label">Major Non-Conformances</div>
+        </div>
+        <div class="summary-card">
+            <h3>Current Site</h3>
+            <div class="value">${summary.currentSite}</div>
+            <div class="label">Primary Location</div>
+        </div>
+    `;
+}
+
+// Generate score cards HTML
+function generateScoreCardsHTML(summary) {
+    if (!summary.overallScores) return '';
+    
+    return `
+        <div class="score-cards">
+            ${Object.entries(summary.overallScores).map(([scope, scoreData]) => `
+                <div class="score-card">
+                    <h4>${scope.replace(/([A-Z])/g, ' $1').trim()}</h4>
+                    <div class="score">${scoreData.score || 0}</div>
+                    <div class="rating">${scoreData.rating || 'N/A'} (${scoreData.percentage || 0}%)</div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+// Generate charts HTML section
+function generateChartsHTML(charts) {
+    if (!charts || Object.keys(charts).length === 0) {
+        return '<p>No charts available for this report.</p>';
+    }
+    
+    return Object.entries(charts).map(([chartId, chartData]) => {
+        if (chartData) {
+            const chartTitle = chartId.replace('Chart', '').replace(/([A-Z])/g, ' $1').trim();
+            return `
+                <div class="chart-container">
+                    <h3>${chartTitle} Chart</h3>
+                    <img src="${chartData}" alt="${chartTitle} Chart" />
+                </div>
+            `;
+        }
+        return '';
+    }).join('');
+}
+
+// Generate critical issues HTML
+function generateCriticalIssuesHTML(criticalIssues) {
+    if (!criticalIssues || criticalIssues.length === 0) {
+        return '';
+    }
+    
+    return `
+        <section class="critical-issues">
+            <h3>Critical Issues Identified</h3>
+            ${criticalIssues.map(issue => `
+                <div class="issue-item">
+                    <strong>${issue.type}</strong>
+                    ${issue.site ? ` - ${issue.site}` : ''}
+                    ${issue.section ? ` (${issue.section})` : ''}
+                    <br>
+                    <span>${issue.issue}</span>
+                </div>
+            `).join('')}
+        </section>
+    `;
+}
+
+// Generate recommendations HTML
+function generateRecommendationsHTML(recommendations) {
+    if (!recommendations || recommendations.length === 0) {
+        return '';
+    }
+    
+    return `
+        <section class="recommendations-section">
+            <h2>Recommendations</h2>
+            ${recommendations.map(rec => `
+                <div class="recommendation-item">
+                    <strong>${rec.priority} Priority - ${rec.type}</strong>
+                    ${rec.site ? ` (${rec.site})` : ''}
+                    <br>
+                    <strong>Issue:</strong> ${rec.issue}
+                    <br>
+                    <strong>Recommendation:</strong> ${rec.recommendation}
+                </div>
+            `).join('')}
+        </section>
+    `;
+}
+
     // Calculate overall compliance
     if (projectData && projectData.score > 0 && summary.averageSiteScore > 0) {
         summary.overallCompliance = Math.round((projectData.score + summary.averageSiteScore) / 2);
@@ -72,6 +637,170 @@ function generateSummary(projectData, sitesData) {
     }
     
     return summary;
+}
+
+// Capture charts for report
+function captureChartsForReport() {
+    try {
+        const charts = {};
+        
+        // Capture dashboard charts if they exist
+        if (window.app && window.app.charts) {
+            const chartElements = ['ratingChart', 'distributionChart', 'managementChart'];
+            
+            chartElements.forEach(chartId => {
+                const canvas = document.getElementById(chartId);
+                if (canvas) {
+                    try {
+                        charts[chartId] = canvas.toDataURL('image/png');
+                    } catch (error) {
+                        console.warn(`Could not capture chart ${chartId}:`, error);
+                        charts[chartId] = null;
+                    }
+                }
+            });
+        }
+        
+        return charts;
+    } catch (error) {
+        console.error('Error capturing charts:', error);
+        return {};
+    }
+}
+
+// Initialize report generation functionality
+function initializeReportGeneration() {
+    try {
+        console.log('Initializing report generation...');
+        
+        // Initialize logo upload functionality
+        initializeLogoUpload();
+        
+        // Initialize new report generation buttons
+        const generateBtn = document.getElementById('generateDetailedReportBtn');
+        if (generateBtn) {
+            generateBtn.addEventListener('click', generateExecutiveReport);
+        }
+        
+        const exportHtmlBtn = document.getElementById('exportHtmlReportBtn');
+        if (exportHtmlBtn) {
+            exportHtmlBtn.addEventListener('click', exportToHTML);
+        }
+        
+        // Initialize legacy report generation
+        initializeLegacyReportGeneration();
+        
+        console.log('Report generation initialized successfully');
+    } catch (error) {
+        console.error('Error initializing report generation:', error);
+    }
+}
+
+// Initialize logo upload functionality
+function initializeLogoUpload() {
+    try {
+        const uploadBtn = document.getElementById('uploadLogoBtn');
+        const fileInput = document.getElementById('logoFileInput');
+        const removeBtn = document.getElementById('removeLogoBtn');
+        const logoPreview = document.getElementById('logoPreview');
+        const logoImage = document.getElementById('logoImage');
+        
+        if (uploadBtn && fileInput) {
+            uploadBtn.addEventListener('click', () => {
+                fileInput.click();
+            });
+            
+            fileInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    if (file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            if (logoImage) {
+                                logoImage.src = e.target.result;
+                                logoPreview.style.display = 'block';
+                                removeBtn.style.display = 'inline-block';
+                                
+                                // Store logo data for report generation
+                                window.reportLogoData = e.target.result;
+                            }
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        alert('Please select a valid image file (PNG, JPG, GIF, etc.)');
+                    }
+                }
+            });
+        }
+        
+        if (removeBtn) {
+            removeBtn.addEventListener('click', () => {
+                if (logoPreview) logoPreview.style.display = 'none';
+                if (removeBtn) removeBtn.style.display = 'none';
+                if (fileInput) fileInput.value = '';
+                window.reportLogoData = null;
+            });
+        }
+        
+        console.log('Logo upload functionality initialized');
+    } catch (error) {
+        console.error('Error initializing logo upload:', error);
+    }
+}
+
+// Generate Executive Report
+function generateExecutiveReport() {
+    try {
+        console.log('Generating executive report...');
+        
+        const report = generateAuditReport();
+        if (!report) {
+            return;
+        }
+        
+        // Create executive report HTML
+        const reportHtml = createExecutiveReportHTML(report);
+        
+        // Display in a new window/tab for printing
+        displayReportInNewWindow(reportHtml, 'Executive Audit Report');
+        
+    } catch (error) {
+        console.error('Error generating executive report:', error);
+        alert('Error generating executive report. Please check the console for details.');
+    }
+}
+
+// Export to HTML
+function exportToHTML() {
+    try {
+        console.log('Exporting report to HTML...');
+        
+        const report = generateAuditReport();
+        if (!report) {
+            return;
+        }
+        
+        // Create full HTML report
+        const reportHtml = createFullHTMLReport(report);
+        
+        // Create downloadable HTML file
+        const blob = new Blob([reportHtml], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `audit_report_${new Date().toISOString().split('T')[0]}.html`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        console.log('HTML report exported successfully');
+        
+    } catch (error) {
+        console.error('Error exporting HTML report:', error);
+        alert('Error exporting HTML report. Please check the console for details.');
+    }
 }
 
 // Generate HTML report
@@ -271,8 +1000,8 @@ function printReport() {
     printWindow.print();
 }
 
-// Initialize report generation
-function initializeReportGeneration() {
+// Initialize legacy report generation (keeping for backward compatibility)
+function initializeLegacyReportGeneration() {
     // Setup event listeners for report buttons
     const htmlReportBtn = document.getElementById('generateHTMLReport');
     const jsonReportBtn = document.getElementById('generateJSONReport');
@@ -298,5 +1027,9 @@ window.reportGeneration = {
     downloadHTMLReport,
     downloadJSONReport,
     printReport,
-    initializeReportGeneration
+    initializeReportGeneration,
+    captureChartsForReport,
+    initializeLogoUpload,
+    generateExecutiveReport,
+    exportToHTML
 };

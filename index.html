@@ -75,7 +75,7 @@
         }
     </script>
     
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    <!-- Chart.js will be loaded via main.js imports -->
 </head>
 <body>
     <div class="container">
@@ -91,26 +91,15 @@
                     </select>
                     <span class="info-text">Manage projects in System Settings tab</span>
                 </div>
-                
-                <div class="project-actions">
-                    <button class="btn btn-green" id="addProjectBtn">Add New Project</button>
-                    <button class="btn btn-secondary" id="cloneProjectBtn">Clone Current Project</button>
-                </div>
             </div>
             
             <div class="project-info">
-                <input type="text" id="projectName" placeholder="Project Name" value="POWER COMPANY PJSC">
-                <input type="text" id="siteName" placeholder="Site Name" disabled>
+                <select id="siteSelector" class="site-name-dropdown">
+                    <option value="">Select a site</option>
+                </select>
                 <input type="date" id="inspectionDate">
                 <input type="text" id="leadAuditor" placeholder="Lead Auditor">
                 <input type="text" id="projectDirector" placeholder="Project Director">
-            </div>
-            
-            <div class="site-selector">
-                <select id="siteSelector">
-                    <option value="">Select a site</option>
-                </select>
-                <span class="info-text">Manage sites in System Settings tab</span>
             </div>
         </div>
         
@@ -165,6 +154,7 @@
                         <button id="ratingChartScopeAll" class="active">Current Site</button>
                         <button id="ratingChartScopeManagement">Management</button>
                         <button id="ratingChartScopeAllSites">All Sites</button>
+                        <button id="ratingChartScopeTotal">Project Overview</button>
                     </div>
                     <div class="chart-canvas-container">
                         <canvas id="ratingChart"></canvas>
@@ -176,6 +166,7 @@
                         <button id="distributionChartScopeAll" class="active">Current Site</button>
                         <button id="distributionChartScopeManagement">Management</button>
                         <button id="distributionChartScopeAllSites">All Sites</button>
+                        <button id="distributionChartScopeTotal">Project Overview</button>
                     </div>
                     <div class="chart-canvas-container">
                         <canvas id="distributionChart"></canvas>
@@ -191,6 +182,11 @@
                         <button id="chartScopeAll" class="active">Current Site</button>
                         <button id="chartScopeManagement">Management</button>
                         <button id="chartScopeAllSites">All Sites</button>
+                        <button id="chartScopeTotal">Project Overview</button>
+                    </div>
+                    <div class="chart-view-controls">
+                        <button id="chartViewType" class="chart-view-btn active" data-view="type">By Audit Type</button>
+                        <button id="chartViewSections" class="chart-view-btn" data-view="sections">By Sections</button>
                     </div>
                     <div class="chart-canvas-container">
                         <canvas id="managementChart"></canvas>
@@ -204,6 +200,7 @@
                 <div id="recommendationsContent" class="recommendations-content" contenteditable="false"></div>
                 <div class="recommendations-actions">
                     <button class="btn btn-secondary" id="regenerateRecommendationsBtn">Regenerate Recommendations</button>
+                    <button class="btn btn-secondary" id="showSampleRecommendationsBtn">Show Sample Data</button>
                     <button class="btn btn-green" id="saveRecommendationsBtn" style="display: none;">Save Changes</button>
                     <button class="btn btn-secondary" id="cancelEditRecommendationsBtn" style="display: none;">Cancel</button>
                 </div>
@@ -371,7 +368,12 @@
                         </div>
                         <div id="logoUploadArea">
                             <p style="margin-bottom: 10px; color: #666;">Company Logo</p>
+                            <input type="file" id="logoFileInput" accept="image/*" style="display: none;">
                             <button type="button" class="logo-upload-btn" id="uploadLogoBtn">Upload Logo</button>
+                            <button type="button" class="btn btn-sm btn-danger" id="removeLogoBtn" style="display: none;">Remove Logo</button>
+                            <div id="logoPreview" class="logo-preview" style="display: none;">
+                                <img id="logoImage" alt="Company Logo Preview" class="logo-preview-img">
+                            </div>
                             <input type="file" id="logoFileInput" accept="image/*" style="display: none;">
                         </div>
                         <button type="button" class="logo-remove-btn" id="removeLogoBtn" style="display: none;">Remove Logo</button>
@@ -437,6 +439,27 @@
             
             <!-- System Settings Container with Dynamic Question Management -->
             <div class="system-settings-container">
+                <!-- Project Management Section -->
+                <div class="project-management-settings">
+                    <h3>Project Management</h3>
+                    <div class="info-note">
+                        <strong>Note:</strong> Manage your audit projects here. Create new projects, clone existing ones, or manage project-wide settings.
+                    </div>
+                    
+                    <div class="project-actions">
+                        <button class="btn btn-green" id="addProjectBtn">Add New Project</button>
+                        <button class="btn btn-secondary" id="cloneProjectBtn">Clone Current Project</button>
+                        <button class="btn btn-secondary" id="refreshProjectsBtn">Refresh Projects List</button>
+                    </div>
+                    
+                    <div class="project-list">
+                        <h4>Existing Projects</h4>
+                        <div class="project-list-container" id="projectListContainer">
+                            <!-- Projects will be dynamically populated -->
+                        </div>
+                    </div>
+                </div>
+                
                 <!-- Site Management Section -->
                 <div class="site-management">
                     <h3>Site Management</h3>
@@ -449,18 +472,62 @@
                         <button class="btn btn-secondary" id="exportSitesListBtn">Export Sites List</button>
                     </div>
                     
-                    <div class="site-list" id="siteList"></div>
                     <div class="add-site-form">
                         <input type="text" id="newSiteName" placeholder="Enter new site name">
                         <button class="btn btn-green" id="addSiteBtn">Add Site</button>
                     </div>
+                    
+                    <div class="site-list">
+                        <h4>Existing Sites</h4>
+                        <div class="site-list-container" id="siteListContainer">
+                            <!-- Sites will be dynamically populated -->
+                        </div>
+                    </div>
                 </div>
                 
-                <!-- Question Management Section - Dynamic Only -->
+                <!-- Question Management Section -->
                 <div class="question-management">
                     <h3>Question Management</h3>
-                    <!-- This is the container that the JavaScript is looking for -->
-                    <div id="questionManagementContainer">
+                    <div class="info-note">
+                        <strong>Note:</strong> View and manage all audit questions loaded from templates. Questions are organized by Management System and Site Performance categories.
+                    </div>
+                    
+                    <div class="template-actions">
+                        <button class="btn btn-green" id="loadDefaultTemplateBtn2">Load Default Template</button>
+                        <button class="btn btn-secondary" id="refreshQuestionsBtn">Refresh Questions List</button>
+                    </div>
+                    
+                    <div class="questions-tabs-container">
+                        <div class="questions-tab-navigation">
+                            <button class="questions-tab active" data-questions-tab="management">
+                                <span class="tab-icon">🏢</span>
+                                Management System Questions
+                                <span class="tab-count" id="managementQuestionsCount">(0)</span>
+                            </button>
+                            <button class="questions-tab" data-questions-tab="site">
+                                <span class="tab-icon">🏭</span>
+                                Site Performance Questions
+                                <span class="tab-count" id="siteQuestionsCount">(0)</span>
+                            </button>
+                        </div>
+                        
+                        <div class="questions-tab-content">
+                            <div class="questions-panel active" id="managementQuestionsPanel">
+                                <div class="questions-container" id="managementQuestionsContainer">
+                                    <!-- Management questions will be dynamically populated -->
+                                </div>
+                            </div>
+                            
+                            <div class="questions-panel" id="siteQuestionsPanel">
+                                <div class="questions-container" id="siteQuestionsContainer">
+                                    <!-- Site questions will be dynamically populated -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Legacy container for existing JavaScript -->
+                    <div id="questionManagementContainer" style="display: none;">
                         <!-- Content will be dynamically populated by JavaScript -->
                     </div>
                 </div>

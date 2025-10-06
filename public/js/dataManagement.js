@@ -222,10 +222,10 @@
     }
     
     // Load default template
-    function loadDefaultTemplate() {
+    function loadDefaultTemplate(skipConfirmation = false) {
         try {
             console.log('Loading default template...');
-            if (confirm("Load default template? This will overwrite your current configuration and data.")) {
+            if (skipConfirmation || confirm("Load default template? This will overwrite your current configuration and data.")) {
                 // Built-in default template configuration
                 const defaultConfig = {
                     management: {

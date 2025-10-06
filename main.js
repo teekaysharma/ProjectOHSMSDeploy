@@ -2,6 +2,10 @@
 import './style.css';
 import './public/css/styles.css';
 
+// Import Chart.js
+import Chart from 'chart.js/auto';
+window.Chart = Chart;
+
 // Initialize global app object before loading any scripts
 window.app = {
     masterConfig: {
@@ -180,6 +184,15 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('✓ Report Generation initialized (fallback)');
         }
         
+        // Initialize recommendations
+        if (window.recommendations && window.recommendations.initializeRecommendations) {
+            window.recommendations.initializeRecommendations();
+            console.log('✓ Recommendations initialized');
+        } else if (typeof initializeRecommendations === 'function') {
+            initializeRecommendations();
+            console.log('✓ Recommendations initialized (fallback)');
+        }
+        
         // Initialize charts after Chart.js loads
         const initCharts = () => {
             if (typeof Chart !== 'undefined') {
@@ -205,19 +218,23 @@ document.addEventListener('DOMContentLoaded', function() {
         
         setTimeout(initCharts, 500); // Give Chart.js time to load
         
-        // Load default template if no data exists
-        setTimeout(() => {
-            const hasProject = localStorage.getItem('ohsAuditToolData');
-            
-            if (!hasProject) {
-                console.log('No existing data found, loading default template...');
-                if (window.dataManagement && window.dataManagement.loadDefaultTemplate) {
-                    window.dataManagement.loadDefaultTemplate();
-                } else if (typeof loadDefaultTemplate === 'function') {
-                    loadDefaultTemplate();
-                }
+        // Load default template if no questions exist (check immediately)
+        console.log('Checking if template needs to be loaded...');
+        console.log('app.hasQuestions():', app.hasQuestions());
+        console.log('Master config:', app.masterConfig);
+        
+        if (!app.hasQuestions()) {
+            console.log('No questions found, loading default template...');
+            if (typeof loadDefaultTemplate === 'function') {
+                setTimeout(() => {
+                    loadDefaultTemplate(true); // Skip confirmation for initial load
+                }, 500); // Small delay to ensure all components are ready
+            } else {
+                console.error('loadDefaultTemplate function not found');
             }
-        }, 1000);
+        } else {
+            console.log('Questions already exist, skipping template load');
+        }
         
         console.log('🎉 OHS Management System Audit Tool fully initialized!');
         
