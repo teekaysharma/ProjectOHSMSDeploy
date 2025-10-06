@@ -632,31 +632,6 @@ function generateRecommendationsHTML(recommendations) {
     `;
 }
 
-    // Calculate overall compliance
-    if (projectData && projectData.score > 0 && summary.averageSiteScore > 0) {
-        summary.overallCompliance = Math.round((projectData.score + summary.averageSiteScore) / 2);
-    } else if (projectData && projectData.score > 0) {
-        summary.overallCompliance = projectData.score;
-    } else if (summary.averageSiteScore > 0) {
-        summary.overallCompliance = summary.averageSiteScore;
-    }
-    
-    // Count critical issues (scores of 1 or 2)
-    if (projectData && projectData.questions) {
-        summary.criticalIssues += projectData.questions.filter(q => q.score <= 2 && q.score > 0).length;
-    }
-    
-    if (sitesData) {
-        sitesData.forEach(site => {
-            if (site.questions) {
-                summary.criticalIssues += site.questions.filter(q => q.score <= 2 && q.score > 0).length;
-            }
-        });
-    }
-    
-    return summary;
-}
-
 // Capture charts for report
 function captureChartsForReport() {
     try {
