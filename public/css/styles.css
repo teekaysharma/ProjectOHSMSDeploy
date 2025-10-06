@@ -927,6 +927,14 @@ body {
     display: flex;
     gap: 8px;
 }
+.site-item.current {
+    border-color: #4c51bf;
+    background: #f0f8ff;
+}
+.site-item.current .site-name {
+    color: #4c51bf;
+    font-weight: 700;
+}
 .site-item {
     display: flex;
     align-items: center;
