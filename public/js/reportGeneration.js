@@ -158,6 +158,167 @@ function generateReportSummary(project) {
     return summary;
 }
 
+// Capture charts for report
+function captureChartsForReport() {
+    try {
+        const charts = {};
+        
+        // Capture dashboard charts if they exist
+        if (window.app && window.app.charts) {
+            const chartElements = ['ratingChart', 'distributionChart', 'managementChart'];
+            
+            chartElements.forEach(chartId => {
+                const canvas = document.getElementById(chartId);
+                if (canvas) {
+                    try {
+                        charts[chartId] = canvas.toDataURL('image/png');
+                    } catch (error) {
+                        console.warn(`Could not capture chart ${chartId}:`, error);
+                        charts[chartId] = null;
+                    }
+                }
+            });
+        }
+        
+        return charts;
+    } catch (error) {
+        console.error('Error capturing charts:', error);
+        return {};
+    }
+}
+
+// Initialize report generation functionality
+function initializeReportGeneration() {
+    try {
+        console.log('Initializing report generation...');
+        
+        // Initialize logo upload functionality
+        initializeLogoUpload();
+        
+        // Initialize report generation buttons
+        const generateBtn = document.getElementById('generateDetailedReportBtn');
+        if (generateBtn) {
+            generateBtn.addEventListener('click', generateExecutiveReport);
+        }
+        
+        const exportHtmlBtn = document.getElementById('exportHtmlReportBtn');
+        if (exportHtmlBtn) {
+            exportHtmlBtn.addEventListener('click', exportToHTML);
+        }
+        
+        console.log('Report generation initialized successfully');
+    } catch (error) {
+        console.error('Error initializing report generation:', error);
+    }
+}
+
+// Initialize logo upload functionality
+function initializeLogoUpload() {
+    try {
+        const uploadBtn = document.getElementById('uploadLogoBtn');
+        const fileInput = document.getElementById('logoFileInput');
+        const removeBtn = document.getElementById('removeLogoBtn');
+        const logoPreview = document.getElementById('logoPreview');
+        const logoImage = document.getElementById('logoImage');
+        
+        if (uploadBtn && fileInput) {
+            uploadBtn.addEventListener('click', () => {
+                fileInput.click();
+            });
+            
+            fileInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    if (file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            if (logoImage) {
+                                logoImage.src = e.target.result;
+                                logoPreview.style.display = 'block';
+                                removeBtn.style.display = 'inline-block';
+                                
+                                // Store logo data for report generation
+                                window.reportLogoData = e.target.result;
+                            }
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        alert('Please select a valid image file (PNG, JPG, GIF, etc.)');
+                    }
+                }
+            });
+        }
+        
+        if (removeBtn) {
+            removeBtn.addEventListener('click', () => {
+                if (logoPreview) logoPreview.style.display = 'none';
+                if (removeBtn) removeBtn.style.display = 'none';
+                if (fileInput) fileInput.value = '';
+                window.reportLogoData = null;
+            });
+        }
+        
+        console.log('Logo upload functionality initialized');
+    } catch (error) {
+        console.error('Error initializing logo upload:', error);
+    }
+}
+
+// Generate Executive Report
+function generateExecutiveReport() {
+    try {
+        console.log('Generating executive report...');
+        
+        const report = generateAuditReport();
+        if (!report) {
+            return;
+        }
+        
+        // Create executive report HTML
+        const reportHtml = createExecutiveReportHTML(report);
+        
+        // Display in a new window/tab for printing
+        displayReportInNewWindow(reportHtml, 'Executive Audit Report');
+        
+    } catch (error) {
+        console.error('Error generating executive report:', error);
+        alert('Error generating executive report. Please check the console for details.');
+    }
+}
+
+// Export to HTML
+function exportToHTML() {
+    try {
+        console.log('Exporting report to HTML...');
+        
+        const report = generateAuditReport();
+        if (!report) {
+            return;
+        }
+        
+        // Create full HTML report
+        const reportHtml = createFullHTMLReport(report);
+        
+        // Create downloadable HTML file
+        const blob = new Blob([reportHtml], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `audit_report_${new Date().toISOString().split('T')[0]}.html`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        console.log('HTML report exported successfully');
+        
+    } catch (error) {
+        console.error('Error exporting HTML report:', error);
+        alert('Error exporting HTML report. Please check the console for details.');
+    }
+}
+
 // Generate HTML report
 function generateHTMLReport() {
     const report = generateAuditReport();
