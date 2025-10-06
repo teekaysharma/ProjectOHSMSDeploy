@@ -494,18 +494,31 @@
                         <button class="btn btn-secondary" id="refreshQuestionsBtn">Refresh Questions List</button>
                     </div>
                     
-                    <div class="questions-list">
-                        <div class="questions-section">
-                            <h4>Management System Questions</h4>
-                            <div class="questions-container" id="managementQuestionsContainer">
-                                <!-- Management questions will be dynamically populated -->
-                            </div>
+                    <div class="questions-tabs-container">
+                        <div class="questions-tab-navigation">
+                            <button class="questions-tab active" data-questions-tab="management">
+                                <span class="tab-icon">🏢</span>
+                                Management System Questions
+                                <span class="tab-count" id="managementQuestionsCount">(0)</span>
+                            </button>
+                            <button class="questions-tab" data-questions-tab="site">
+                                <span class="tab-icon">🏭</span>
+                                Site Performance Questions
+                                <span class="tab-count" id="siteQuestionsCount">(0)</span>
+                            </button>
                         </div>
                         
-                        <div class="questions-section">
-                            <h4>Site Performance Questions</h4>
-                            <div class="questions-container" id="siteQuestionsContainer">
-                                <!-- Site questions will be dynamically populated -->
+                        <div class="questions-tab-content">
+                            <div class="questions-panel active" id="managementQuestionsPanel">
+                                <div class="questions-container" id="managementQuestionsContainer">
+                                    <!-- Management questions will be dynamically populated -->
+                                </div>
+                            </div>
+                            
+                            <div class="questions-panel" id="siteQuestionsPanel">
+                                <div class="questions-container" id="siteQuestionsContainer">
+                                    <!-- Site questions will be dynamically populated -->
+                                </div>
                             </div>
                         </div>
                     </div>
