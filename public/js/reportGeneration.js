@@ -516,8 +516,8 @@ function printReport() {
     printWindow.print();
 }
 
-// Initialize report generation
-function initializeReportGeneration() {
+// Initialize legacy report generation (keeping for backward compatibility)
+function initializeLegacyReportGeneration() {
     // Setup event listeners for report buttons
     const htmlReportBtn = document.getElementById('generateHTMLReport');
     const jsonReportBtn = document.getElementById('generateJSONReport');
