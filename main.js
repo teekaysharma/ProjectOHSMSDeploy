@@ -209,12 +209,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         setTimeout(initCharts, 500); // Give Chart.js time to load
         
-        // Load default template if no data exists
+        // Load default template if no questions exist
         setTimeout(() => {
-            const hasProject = localStorage.getItem('ohsAuditToolData');
-            
-            if (!hasProject) {
-                console.log('No existing data found, loading default template...');
+            // Check if we need to load default template based on questions availability
+            if (!app.hasQuestions()) {
+                console.log('No questions found, loading default template...');
                 if (typeof loadDefaultTemplate === 'function') {
                     loadDefaultTemplate(true); // Skip confirmation for initial load
                 }
