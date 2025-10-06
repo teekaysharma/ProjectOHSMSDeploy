@@ -1198,6 +1198,15 @@
                 });
             }
             
+            const refreshProjectsBtn = document.getElementById('refreshProjectsBtn');
+            if (refreshProjectsBtn) {
+                refreshProjectsBtn.addEventListener('click', () => {
+                    updateProjectsList();
+                    updateSitesList();
+                    console.log('Manual refresh triggered for projects and sites');
+                });
+            }
+            
             // Initialize questions tab switching
             initializeQuestionsTabSwitching();
             
