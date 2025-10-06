@@ -1528,20 +1528,22 @@ body {
     }
     
     .chart-container {
-        height: 300px;
+        height: 350px;
         padding: 15px;
     }
     
     .chart-container.full-width {
-        height: 350px;
+        height: 400px;
     }
     
     .chart-canvas-container {
-        height: 200px;
+        height: 240px;
+        padding-bottom: 40px;
     }
     
     .chart-container.full-width .chart-canvas-container {
-        height: 250px;
+        height: 300px;
+        padding-bottom: 40px;
     }
 }
 @media (max-width: 480px) {
