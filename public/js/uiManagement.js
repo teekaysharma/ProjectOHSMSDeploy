@@ -943,6 +943,270 @@
         }
     }
     
+    // Initialize management lists
+    function initializeManagementLists() {
+        try {
+            console.log('Initializing management lists...');
+            
+            // Initialize refresh buttons
+            const refreshQuestionsBtn = document.getElementById('refreshQuestionsBtn');
+            if (refreshQuestionsBtn) {
+                refreshQuestionsBtn.addEventListener('click', () => {
+                    updateQuestionsList();
+                });
+            }
+            
+            // Update lists when tab is shown
+            setTimeout(() => {
+                updateProjectsList();
+                updateSitesList();
+                updateQuestionsList();
+            }, 1000);
+            
+            console.log('Management lists initialized successfully');
+        } catch (error) {
+            console.error('Error initializing management lists:', error);
+        }
+    }
+    
+    // Update projects list
+    function updateProjectsList() {
+        try {
+            const container = document.getElementById('projectListContainer');
+            if (!container) return;
+            
+            const projects = window.app && window.app.inspectionData && window.app.inspectionData.projects ? 
+                            Object.keys(window.app.inspectionData.projects) : [];
+            
+            if (projects.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No projects created yet. Use the "Add New Project" button to create your first project.</div>';
+                return;
+            }
+            
+            let html = '';
+            projects.forEach(projectName => {
+                const project = window.app.inspectionData.projects[projectName];
+                const sitesCount = project.sites ? Object.keys(project.sites).length : 0;
+                const currentProject = window.app.currentProject === projectName;
+                
+                html += `
+                    <div class="project-item ${currentProject ? 'current' : ''}">
+                        <div class="project-info">
+                            <div class="project-name">${projectName} ${currentProject ? '(Current)' : ''}</div>
+                            <div class="project-details">${sitesCount} site(s) • Lead Auditor: ${project.leadAuditor || 'Not set'}</div>
+                        </div>
+                        <div class="project-actions">
+                            ${!currentProject ? `<button class="btn btn-sm btn-secondary" onclick="switchToProject('${projectName}')">Switch To</button>` : ''}
+                            <button class="btn btn-sm btn-secondary" onclick="editProjectName('${projectName}')">Edit</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteProject('${projectName}')">Delete</button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        } catch (error) {
+            console.error('Error updating projects list:', error);
+        }
+    }
+    
+    // Update sites list
+    function updateSitesList() {
+        try {
+            const container = document.getElementById('siteListContainer');
+            if (!container) return;
+            
+            const project = window.app ? window.app.getCurrentProject() : null;
+            if (!project || !project.sites) {
+                container.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No sites found. Add a site using the form above.</div>';
+                return;
+            }
+            
+            const sites = Object.keys(project.sites);
+            if (sites.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No sites created yet. Add a site using the form above.</div>';
+                return;
+            }
+            
+            let html = '';
+            sites.forEach(siteName => {
+                const currentSite = project.currentSite === siteName;
+                
+                html += `
+                    <div class="site-item ${currentSite ? 'current' : ''}">
+                        <div class="site-name">${siteName} ${currentSite ? '(Current)' : ''}</div>
+                        <div class="site-actions">
+                            ${!currentSite ? `<button class="btn btn-sm btn-secondary" onclick="switchToSite('${siteName}')">Switch To</button>` : ''}
+                            <button class="btn btn-sm btn-secondary" onclick="editSiteName('${siteName}')">Edit</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteSite('${siteName}')">Delete</button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        } catch (error) {
+            console.error('Error updating sites list:', error);
+        }
+    }
+    
+    // Update questions list
+    function updateQuestionsList() {
+        try {
+            const managementContainer = document.getElementById('managementQuestionsContainer');
+            const siteContainer = document.getElementById('siteQuestionsContainer');
+            
+            if (!managementContainer || !siteContainer) return;
+            
+            const masterConfig = window.app && window.app.masterConfig ? window.app.masterConfig : null;
+            if (!masterConfig) {
+                managementContainer.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No template loaded. Use "Load Default Template" to load questions.</div>';
+                siteContainer.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No template loaded. Use "Load Default Template" to load questions.</div>';
+                return;
+            }
+            
+            // Update management questions
+            if (masterConfig.management) {
+                let managementHtml = '';
+                let managementCount = 0;
+                
+                for (const section in masterConfig.management) {
+                    const questions = masterConfig.management[section];
+                    managementCount += questions.length;
+                    
+                    questions.forEach((question, index) => {
+                        managementHtml += `
+                            <div class="question-item">
+                                <div class="question-content">
+                                    <div class="question-text">${question}</div>
+                                    <div class="question-meta">Section: ${section} • Index: ${index + 1}</div>
+                                </div>
+                                <div class="question-actions">
+                                    <button class="btn btn-sm btn-secondary" onclick="editQuestion('management', '${section}', ${index})">Edit</button>
+                                    <button class="btn btn-sm btn-danger" onclick="deleteQuestion('management', '${section}', ${index})">Delete</button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+                
+                if (managementCount === 0) {
+                    managementHtml = '<div style="text-align: center; color: #666; padding: 20px;">No management questions found in template.</div>';
+                }
+                
+                managementContainer.innerHTML = managementHtml;
+            }
+            
+            // Update site questions
+            if (masterConfig.site) {
+                let siteHtml = '';
+                let siteCount = 0;
+                
+                for (const section in masterConfig.site) {
+                    const questions = masterConfig.site[section];
+                    siteCount += questions.length;
+                    
+                    questions.forEach((question, index) => {
+                        siteHtml += `
+                            <div class="question-item">
+                                <div class="question-content">
+                                    <div class="question-text">${question}</div>
+                                    <div class="question-meta">Section: ${section} • Index: ${index + 1}</div>
+                                </div>
+                                <div class="question-actions">
+                                    <button class="btn btn-sm btn-secondary" onclick="editQuestion('site', '${section}', ${index})">Edit</button>
+                                    <button class="btn btn-sm btn-danger" onclick="deleteQuestion('site', '${section}', ${index})">Delete</button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+                
+                if (siteCount === 0) {
+                    siteHtml = '<div style="text-align: center; color: #666; padding: 20px;">No site questions found in template.</div>';
+                }
+                
+                siteContainer.innerHTML = siteHtml;
+            }
+        } catch (error) {
+            console.error('Error updating questions list:', error);
+        }
+    }
+    
+    // Project management functions
+    function switchToProject(projectName) {
+        if (window.app && window.app.switchToProject) {
+            window.app.switchToProject(projectName);
+            updateProjectsList();
+            updateSitesList();
+            updateAllDashboardComponents();
+        }
+    }
+    
+    function editProjectName(projectName) {
+        const newName = prompt('Enter new project name:', projectName);
+        if (newName && newName !== projectName && window.app) {
+            // Implementation would depend on the app's project management system
+            alert('Project renaming functionality to be implemented');
+        }
+    }
+    
+    function deleteProject(projectName) {
+        if (confirm(`Are you sure you want to delete project "${projectName}"? This action cannot be undone.`)) {
+            // Implementation would depend on the app's project management system
+            alert('Project deletion functionality to be implemented');
+        }
+    }
+    
+    // Site management functions
+    function switchToSite(siteName) {
+        if (window.app && window.app.getCurrentProject) {
+            const project = window.app.getCurrentProject();
+            if (project) {
+                project.currentSite = siteName;
+                if (window.app.saveData) window.app.saveData();
+                updateSitesList();
+                updateAllDashboardComponents();
+            }
+        }
+    }
+    
+    function editSiteName(siteName) {
+        const newName = prompt('Enter new site name:', siteName);
+        if (newName && newName !== siteName && window.app) {
+            const project = window.app.getCurrentProject();
+            if (project && project.sites) {
+                project.sites[newName] = project.sites[siteName];
+                delete project.sites[siteName];
+                if (project.currentSite === siteName) {
+                    project.currentSite = newName;
+                }
+                if (window.app.saveData) window.app.saveData();
+                updateSitesList();
+                updateAllDashboardComponents();
+            }
+        }
+    }
+    
+    function deleteSite(siteName) {
+        if (confirm(`Are you sure you want to delete site "${siteName}"? This action cannot be undone.`)) {
+            if (window.app) {
+                const project = window.app.getCurrentProject();
+                if (project && project.sites) {
+                    delete project.sites[siteName];
+                    // If this was the current site, switch to the first available site
+                    if (project.currentSite === siteName) {
+                        const remainingSites = Object.keys(project.sites);
+                        project.currentSite = remainingSites.length > 0 ? remainingSites[0] : null;
+                    }
+                    if (window.app.saveData) window.app.saveData();
+                    updateSitesList();
+                    updateAllDashboardComponents();
+                }
+            }
+        }
+    }
+    
     // Expose functions to global scope
     window.initializeUI = initializeUI;
     window.showTab = showTab;
