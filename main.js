@@ -209,24 +209,23 @@ document.addEventListener('DOMContentLoaded', function() {
         
         setTimeout(initCharts, 500); // Give Chart.js time to load
         
-        // Load default template if no questions exist
-        setTimeout(() => {
-            console.log('Checking if template needs to be loaded...');
-            console.log('app.hasQuestions():', app.hasQuestions());
-            console.log('Master config:', app.masterConfig);
-            
-            // Check if we need to load default template based on questions availability
-            if (!app.hasQuestions()) {
-                console.log('No questions found, loading default template...');
-                if (typeof loadDefaultTemplate === 'function') {
+        // Load default template if no questions exist (check immediately)
+        console.log('Checking if template needs to be loaded...');
+        console.log('app.hasQuestions():', app.hasQuestions());
+        console.log('Master config:', app.masterConfig);
+        
+        if (!app.hasQuestions()) {
+            console.log('No questions found, loading default template...');
+            if (typeof loadDefaultTemplate === 'function') {
+                setTimeout(() => {
                     loadDefaultTemplate(true); // Skip confirmation for initial load
-                } else {
-                    console.error('loadDefaultTemplate function not found');
-                }
+                }, 500); // Small delay to ensure all components are ready
             } else {
-                console.log('Questions already exist, skipping template load');
+                console.error('loadDefaultTemplate function not found');
             }
-        }, 1500);
+        } else {
+            console.log('Questions already exist, skipping template load');
+        }
         
         console.log('🎉 OHS Management System Audit Tool fully initialized!');
         
