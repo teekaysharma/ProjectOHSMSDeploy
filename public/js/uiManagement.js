@@ -1771,6 +1771,8 @@
     window.editQuestion = editQuestion;
     window.deleteQuestion = deleteQuestion;
     window.updateAllDashboardComponents = updateAllDashboardComponents;
+    window.updateProjectSelector = updateProjectSelector;
+    window.updateSiteSelector = updateSiteSelector;
     window.updateProjectsList = updateProjectsList;
     window.updateSitesList = updateSitesList;
     window.updateQuestionsList = updateQuestionsList;
