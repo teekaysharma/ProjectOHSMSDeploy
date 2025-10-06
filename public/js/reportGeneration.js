@@ -777,20 +777,43 @@ function generateExecutiveReport() {
     try {
         console.log('Generating executive report...');
         
-        const report = generateAuditReport();
-        if (!report) {
+        // Step 1: Test basic data availability
+        console.log('Step 1: Checking data availability...');
+        const project = window.app ? window.app.getCurrentProject() : null;
+        console.log('Project data:', project);
+        
+        if (!project) {
+            console.error('No project data available');
+            alert('No project data available. Please ensure you have a project selected.');
             return;
         }
         
-        // Create executive report HTML
-        const reportHtml = createExecutiveReportHTML(report);
+        // Step 2: Generate report data
+        console.log('Step 2: Generating report data...');
+        const report = generateAuditReport();
+        console.log('Generated report:', report);
         
-        // Display in a new window/tab for printing
+        if (!report) {
+            console.error('Failed to generate report data');
+            alert('Failed to generate report data. Please check the console for details.');
+            return;
+        }
+        
+        // Step 3: Create HTML
+        console.log('Step 3: Creating report HTML...');
+        const reportHtml = createExecutiveReportHTML(report);
+        console.log('Report HTML generated successfully, length:', reportHtml.length);
+        
+        // Step 4: Display in new window
+        console.log('Step 4: Opening report in new window...');
         displayReportInNewWindow(reportHtml, 'Executive Audit Report');
         
+        console.log('Executive report generation completed successfully!');
+        
     } catch (error) {
-        console.error('Error generating executive report:', error);
-        alert('Error generating executive report. Please check the console for details.');
+        console.error('Detailed error in generateExecutiveReport:', error);
+        console.error('Error stack:', error.stack);
+        alert(`Error generating executive report: ${error.message}\n\nCheck console for details.`);
     }
 }
 
