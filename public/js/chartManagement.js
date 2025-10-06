@@ -19,6 +19,52 @@
         else return 'U';
     }
 
+    // Helper function to get data organized by sections
+    function getDataBySections(scope) {
+        const project = window.app.getCurrentProject();
+        if (!project) return { managementSections: {}, siteSections: {} };
+        
+        const managementSections = {};
+        const siteSections = {};
+        
+        // Get management data by sections
+        if (project.managementSystemAudit) {
+            for (const section in project.managementSystemAudit) {
+                if (Array.isArray(project.managementSystemAudit[section])) {
+                    managementSections[section] = project.managementSystemAudit[section];
+                }
+            }
+        }
+        
+        // Get site data by sections based on scope
+        if (scope === 'all-sites' || scope === 'total') {
+            // Get all sites data
+            if (project.sites) {
+                for (const siteName in project.sites) {
+                    const site = project.sites[siteName];
+                    for (const section in site) {
+                        if (Array.isArray(site[section])) {
+                            if (!siteSections[section]) {
+                                siteSections[section] = [];
+                            }
+                            siteSections[section] = siteSections[section].concat(site[section]);
+                        }
+                    }
+                }
+            }
+        } else if (scope === 'all' && project.currentSite && project.sites[project.currentSite]) {
+            // Get current site data
+            const site = project.sites[project.currentSite];
+            for (const section in site) {
+                if (Array.isArray(site[section])) {
+                    siteSections[section] = site[section];
+                }
+            }
+        }
+        
+        return { managementSections, siteSections };
+    }
+
     // Helper function to get data based on scope
     function getDataByScope(scope) {
         let data = [];
