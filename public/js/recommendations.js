@@ -219,13 +219,7 @@ function generateActionPlan(recommendations) {
 function updateRecommendations() {
     try {
         console.log('Updating recommendations...');
-        let recommendations = generateRecommendations();
-        
-        // If no recommendations are generated, create sample recommendations for demonstration
-        if (recommendations.length === 0) {
-            recommendations = generateSampleRecommendations();
-        }
-        
+        const recommendations = generateRecommendations();
         displayRecommendations(recommendations);
         
         // Store recommendations for editing
