@@ -1284,6 +1284,8 @@
             
             // Update lists when tab is shown
             setTimeout(() => {
+                updateProjectSelector();
+                updateSiteSelector();
                 updateProjectsList();
                 updateSitesList();
                 updateQuestionsList();
