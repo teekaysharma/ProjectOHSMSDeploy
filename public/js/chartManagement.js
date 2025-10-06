@@ -717,6 +717,11 @@
                 
                 // Update audit status indicators
                 updateAuditStatusIndicators();
+                
+                // Update recommendations
+                if (window.recommendations && window.recommendations.updateRecommendations) {
+                    window.recommendations.updateRecommendations();
+                }
             } else {
                 console.warn('Chart.js not loaded yet, skipping chart rendering');
             }
