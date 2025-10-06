@@ -997,20 +997,33 @@
         }
     }
     
-    function updateProjectsWithNewSection(type, sectionName, applyToAllSites, specificSite) {
-        for (const projectName in app.inspectionData.projects) {
-            const project = app.inspectionData.projects[projectName];
-            
-            if (type === 'management') {
+    function updateProjectsWithNewSection(type, sectionName, applyToAll, specificTarget) {
+        if (type === 'management') {
+            // Management sections are project-based
+            if (applyToAll) {
+                // Add to all projects
+                for (const projectName in app.inspectionData.projects) {
+                    const project = app.inspectionData.projects[projectName];
+                    project.managementSystemAudit[sectionName] = [];
+                }
+            } else if (specificTarget && app.inspectionData.projects[specificTarget]) {
+                // Add to specific project only
+                const project = app.inspectionData.projects[specificTarget];
                 project.managementSystemAudit[sectionName] = [];
-            } else {
-                // Site sections
-                if (applyToAllSites) {
+            }
+        } else {
+            // Site sections are site-based (within all projects)
+            for (const projectName in app.inspectionData.projects) {
+                const project = app.inspectionData.projects[projectName];
+                
+                if (applyToAll) {
+                    // Add to all sites in this project
                     for (const siteName in project.sites) {
                         project.sites[siteName][sectionName] = [];
                     }
-                } else if (specificSite && project.sites[specificSite]) {
-                    project.sites[specificSite][sectionName] = [];
+                } else if (specificTarget && project.sites[specificTarget]) {
+                    // Add to specific site only
+                    project.sites[specificTarget][sectionName] = [];
                 }
             }
         }
