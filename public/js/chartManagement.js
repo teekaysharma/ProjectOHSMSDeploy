@@ -19,6 +19,16 @@
         else return 'U';
     }
 
+    // Helper function to get scope label for display
+    function getScopeLabel(scope) {
+        switch (scope) {
+            case 'management': return 'Management Only';
+            case 'all-sites': return 'All Sites Only';
+            case 'total': return 'Total Overview';
+            default: return 'Current Site + Management';
+        }
+    }
+
     // Helper function to get data organized by sections
     function getDataBySections(scope) {
         const project = window.app.getCurrentProject();
