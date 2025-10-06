@@ -215,10 +215,8 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (!hasProject) {
                 console.log('No existing data found, loading default template...');
-                if (window.dataManagement && window.dataManagement.loadDefaultTemplate) {
-                    window.dataManagement.loadDefaultTemplate();
-                } else if (typeof loadDefaultTemplate === 'function') {
-                    loadDefaultTemplate();
+                if (typeof loadDefaultTemplate === 'function') {
+                    loadDefaultTemplate(true); // Skip confirmation for initial load
                 }
             }
         }, 1000);
