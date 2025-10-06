@@ -1050,7 +1050,7 @@
         }
     }
     
-    // Update questions list
+    // Update questions list with proper numbering and section organization
     function updateQuestionsList() {
         try {
             const managementContainer = document.getElementById('managementQuestionsContainer');
@@ -1065,72 +1065,127 @@
                 return;
             }
             
-            // Update management questions
+            // Update management questions with section organization
             if (masterConfig.management) {
-                let managementHtml = '';
-                let managementCount = 0;
-                
-                for (const section in masterConfig.management) {
-                    const questions = masterConfig.management[section];
-                    managementCount += questions.length;
-                    
-                    questions.forEach((question, index) => {
-                        managementHtml += `
-                            <div class="question-item">
-                                <div class="question-content">
-                                    <div class="question-text">${question}</div>
-                                    <div class="question-meta">Section: ${section} • Index: ${index + 1}</div>
-                                </div>
-                                <div class="question-actions">
-                                    <button class="btn btn-sm btn-secondary" onclick="editQuestion('management', '${section}', ${index})">Edit</button>
-                                    <button class="btn btn-sm btn-danger" onclick="deleteQuestion('management', '${section}', ${index})">Delete</button>
-                                </div>
-                            </div>
-                        `;
-                    });
-                }
-                
-                if (managementCount === 0) {
-                    managementHtml = '<div style="text-align: center; color: #666; padding: 20px;">No management questions found in template.</div>';
-                }
-                
+                let managementHtml = renderQuestionsWithSections('management', masterConfig.management);
                 managementContainer.innerHTML = managementHtml;
             }
             
-            // Update site questions
+            // Update site questions with section organization
             if (masterConfig.site) {
-                let siteHtml = '';
-                let siteCount = 0;
-                
-                for (const section in masterConfig.site) {
-                    const questions = masterConfig.site[section];
-                    siteCount += questions.length;
-                    
-                    questions.forEach((question, index) => {
-                        siteHtml += `
-                            <div class="question-item">
-                                <div class="question-content">
-                                    <div class="question-text">${question}</div>
-                                    <div class="question-meta">Section: ${section} • Index: ${index + 1}</div>
-                                </div>
-                                <div class="question-actions">
-                                    <button class="btn btn-sm btn-secondary" onclick="editQuestion('site', '${section}', ${index})">Edit</button>
-                                    <button class="btn btn-sm btn-danger" onclick="deleteQuestion('site', '${section}', ${index})">Delete</button>
-                                </div>
-                            </div>
-                        `;
-                    });
-                }
-                
-                if (siteCount === 0) {
-                    siteHtml = '<div style="text-align: center; color: #666; padding: 20px;">No site questions found in template.</div>';
-                }
-                
+                let siteHtml = renderQuestionsWithSections('site', masterConfig.site);
                 siteContainer.innerHTML = siteHtml;
             }
         } catch (error) {
             console.error('Error updating questions list:', error);
         }
+    }
+    
+    // Render questions organized by sections with proper numbering
+    function renderQuestionsWithSections(type, config) {
+        let html = '';
+        let sectionNumber = 1;
+        let totalQuestions = 0;
+        
+        for (const section in config) {
+            const questions = config[section];
+            totalQuestions += questions.length;
+            
+            // Section header with number and controls
+            html += `
+                <div class="question-section-group">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <span class="section-number">${sectionNumber}.</span>
+                            <span class="section-name">${formatSectionName(section)}</span>
+                            <span class="section-count">(${questions.length} questions)</span>
+                        </div>
+                        <div class="section-actions">
+                            <button class="btn btn-sm btn-green" onclick="addQuestionToSection('${type}', '${section}')">Add Question</button>
+                            <button class="btn btn-sm btn-secondary" onclick="editSectionName('${type}', '${section}')">Edit Section</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteSection('${type}', '${section}')">Delete Section</button>
+                        </div>
+                    </div>
+                    
+                    <div class="questions-in-section">
+            `;
+            
+            // Questions within the section
+            if (questions.length === 0) {
+                html += '<div class="no-questions">No questions in this section. Click "Add Question" to add one.</div>';
+            } else {
+                questions.forEach((question, index) => {
+                    const questionNumber = `${sectionNumber}.${index + 1}`;
+                    html += `
+                        <div class="question-item-detailed">
+                            <div class="question-number">${questionNumber}</div>
+                            <div class="question-content-full">
+                                <div class="question-text-full">${question}</div>
+                                <div class="question-meta-full">
+                                    Section: ${formatSectionName(section)} • Position: ${index + 1} of ${questions.length}
+                                </div>
+                            </div>
+                            <div class="question-actions-full">
+                                <button class="btn btn-sm btn-secondary" onclick="editQuestion('${type}', '${section}', ${index})">
+                                    <span>✏️</span> Edit
+                                </button>
+                                <button class="btn btn-sm btn-orange" onclick="moveQuestion('${type}', '${section}', ${index})">
+                                    <span>↕️</span> Move
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteQuestion('${type}', '${section}', ${index})">
+                                    <span>🗑️</span> Delete
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            
+            html += `
+                    </div>
+                </div>
+            `;
+            
+            sectionNumber++;
+        }
+        
+        // Add section controls at the bottom
+        html += `
+            <div class="add-section-controls">
+                <h4>Add New Section</h4>
+                <div class="add-section-form">
+                    <input type="text" id="new${type.charAt(0).toUpperCase() + type.slice(1)}SectionName" placeholder="Enter section name" class="section-name-input">
+                    <div class="add-section-options">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="addTo${type.charAt(0).toUpperCase() + type.slice(1)}AllSites" ${type === 'site' ? 'checked' : ''}>
+                            <span>Add to all sites</span>
+                        </label>
+                        <select id="specific${type.charAt(0).toUpperCase() + type.slice(1)}Site" class="site-selector-small" style="display: ${type === 'site' ? 'none' : 'block'};">
+                            <option value="">Select specific site</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-green" onclick="addSectionWithOptions('${type}')">Add Section</button>
+                </div>
+            </div>
+            
+            <div class="questions-summary">
+                <strong>Total: ${Object.keys(config).length} sections, ${totalQuestions} questions</strong>
+            </div>
+        `;
+        
+        if (totalQuestions === 0) {
+            html = '<div style="text-align: center; color: #666; padding: 40px;">No questions found. Use "Load Default Template" to load questions or add sections manually.</div>';
+        }
+        
+        return html;
+    }
+    
+    // Format section name for display
+    function formatSectionName(sectionName) {
+        return sectionName
+            .replace(/([A-Z])/g, ' $1')
+            .trim()
+            .replace(/^\w/, c => c.toUpperCase());
     }
     
     // Project management functions
