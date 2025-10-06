@@ -1358,6 +1358,33 @@ body {
     margin-top: 8px;
     font-style: italic;
 }
+/* Logo Upload Styles */
+.logo-preview {
+    margin-top: 15px;
+    padding: 10px;
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    text-align: center;
+    background: #f9f9f9;
+}
+.logo-preview-img {
+    max-width: 200px;
+    max-height: 100px;
+    object-fit: contain;
+    border-radius: 4px;
+}
+.logo-upload-btn {
+    background: #4299e1;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+}
+.logo-upload-btn:hover {
+    background: #3182ce;
+}
 .questions-summary {
     text-align: center;
     padding: 15px;
