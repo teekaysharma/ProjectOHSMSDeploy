@@ -149,6 +149,7 @@ function generateReportSummary(project) {
             }
         };
     }
+}
     
 // Create Executive Report HTML with A4 print layout
 function createExecutiveReportHTML(report) {
