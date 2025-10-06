@@ -1348,6 +1348,49 @@
         }
     }
     
+    // Update header site selector dropdown
+    function updateSiteSelector() {
+        try {
+            const siteSelector = document.getElementById('siteSelector');
+            if (!siteSelector) return;
+            
+            const project = window.app ? window.app.getCurrentProject() : null;
+            if (!project || !project.sites) {
+                siteSelector.innerHTML = '<option value="">No sites available</option>';
+                return;
+            }
+            
+            const sites = Object.keys(project.sites);
+            let html = '<option value="">Select a site</option>';
+            
+            sites.forEach(siteName => {
+                const selected = project.currentSite === siteName ? 'selected' : '';
+                html += `<option value="${siteName}" ${selected}>${siteName}</option>`;
+            });
+            
+            siteSelector.innerHTML = html;
+            
+            // Add event listener for site selection changes
+            siteSelector.onchange = (e) => {
+                if (e.target.value && window.app) {
+                    const currentProject = window.app.getCurrentProject();
+                    if (currentProject) {
+                        currentProject.currentSite = e.target.value;
+                        if (window.app.saveData) window.app.saveData();
+                        // Update dashboard and charts
+                        if (typeof updateAllDashboardComponents === 'function') {
+                            updateAllDashboardComponents();
+                        }
+                        console.log('Switched to site:', e.target.value);
+                    }
+                }
+            };
+            
+        } catch (error) {
+            console.error('Error updating site selector:', error);
+        }
+    }
+
     // Update sites list
     function updateSitesList() {
         try {
