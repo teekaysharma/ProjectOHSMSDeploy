@@ -1605,4 +1605,6 @@
     window.editSectionName = editSectionName;
     window.deleteSection = deleteSection;
     window.moveQuestion = moveQuestion;
+    window.initializeQuestionsTabSwitching = initializeQuestionsTabSwitching;
+    window.updateQuestionCounts = updateQuestionCounts;
 })();
