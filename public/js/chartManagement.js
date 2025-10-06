@@ -24,8 +24,8 @@
         switch (scope) {
             case 'management': return 'Management Only';
             case 'all-sites': return 'All Sites Only';
-            case 'total': return 'Total Overview';
-            default: return 'Current Site + Management';
+            case 'total': return 'Project Overview';
+            default: return 'Current Site Only';
         }
     }
 
