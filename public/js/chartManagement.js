@@ -75,7 +75,115 @@
         return { managementSections, siteSections };
     }
 
-    // Helper function to get data based on scope
+    // Helper function to get unique questions count by scope
+    function getUniqueQuestionsCount(scope) {
+        const project = window.app.getCurrentProject();
+        if (!project) return { totalQuestions: 0, answeredQuestions: 0 };
+        
+        const baseTemplate = window.app.masterConfig || {};
+        let uniqueQuestions = new Set();
+        let answeredQuestions = 0;
+        
+        if (scope === 'management') {
+            // Count unique management questions
+            if (project.managementSystemAudit) {
+                for (const section in project.managementSystemAudit) {
+                    if (Array.isArray(project.managementSystemAudit[section])) {
+                        project.managementSystemAudit[section].forEach(item => {
+                            const questionKey = `management_${section}_${item.name}`;
+                            uniqueQuestions.add(questionKey);
+                            if (item.score > 0) answeredQuestions++;
+                        });
+                    }
+                }
+            }
+        } else if (scope === 'all-sites') {
+            // Count unique site questions across all sites
+            const allSiteQuestions = new Map(); // Map to track unique questions with their scores
+            
+            if (project.sites) {
+                for (const siteName in project.sites) {
+                    const site = project.sites[siteName];
+                    for (const section in site) {
+                        if (Array.isArray(site[section])) {
+                            site[section].forEach(item => {
+                                const questionKey = `site_${section}_${item.name}`;
+                                uniqueQuestions.add(questionKey);
+                                // Track if this question is answered in any site
+                                if (!allSiteQuestions.has(questionKey)) {
+                                    allSiteQuestions.set(questionKey, item.score > 0);
+                                } else if (item.score > 0) {
+                                    allSiteQuestions.set(questionKey, true);
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+            
+            // Count answered questions (questions answered in at least one site)
+            answeredQuestions = Array.from(allSiteQuestions.values()).filter(answered => answered).length;
+        } else if (scope === 'total') {
+            // Count unique questions from both management and all sites
+            const allQuestions = new Map();
+            
+            // Add management questions
+            if (project.managementSystemAudit) {
+                for (const section in project.managementSystemAudit) {
+                    if (Array.isArray(project.managementSystemAudit[section])) {
+                        project.managementSystemAudit[section].forEach(item => {
+                            const questionKey = `management_${section}_${item.name}`;
+                            uniqueQuestions.add(questionKey);
+                            allQuestions.set(questionKey, item.score > 0);
+                        });
+                    }
+                }
+            }
+            
+            // Add site questions (unique across all sites)
+            if (project.sites) {
+                for (const siteName in project.sites) {
+                    const site = project.sites[siteName];
+                    for (const section in site) {
+                        if (Array.isArray(site[section])) {
+                            site[section].forEach(item => {
+                                const questionKey = `site_${section}_${item.name}`;
+                                uniqueQuestions.add(questionKey);
+                                if (!allQuestions.has(questionKey)) {
+                                    allQuestions.set(questionKey, item.score > 0);
+                                } else if (item.score > 0) {
+                                    allQuestions.set(questionKey, true);
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+            
+            answeredQuestions = Array.from(allQuestions.values()).filter(answered => answered).length;
+        } else {
+            // Current site only
+            if (project.currentSite && project.sites[project.currentSite]) {
+                const site = project.sites[project.currentSite];
+                for (const section in site) {
+                    if (Array.isArray(site[section])) {
+                        site[section].forEach(item => {
+                            const questionKey = `site_${section}_${item.name}`;
+                            uniqueQuestions.add(questionKey);
+                            if (item.score > 0) answeredQuestions++;
+                        });
+                    }
+                }
+            }
+        }
+        
+        return {
+            totalQuestions: uniqueQuestions.size,
+            answeredQuestions: answeredQuestions
+        };
+    }
+
+    // Helper function to get data based on scope (for chart calculations)
     function getDataByScope(scope) {
         let data = [];
         const project = window.app.getCurrentProject();
@@ -91,40 +199,72 @@
                 }
             }
         } else if (scope === 'all-sites') {
-            // Get all sites data
+            // Get unique site questions (avoid duplicates across sites)
+            const uniqueQuestions = new Map();
             if (project.sites) {
                 for (const siteName in project.sites) {
                     const site = project.sites[siteName];
                     for (const section in site) {
                         if (Array.isArray(site[section])) {
-                            data = data.concat(site[section]);
+                            site[section].forEach(item => {
+                                const questionKey = `${section}_${item.name}`;
+                                if (!uniqueQuestions.has(questionKey)) {
+                                    uniqueQuestions.set(questionKey, item);
+                                } else {
+                                    // If question exists, use the highest score found
+                                    const existingItem = uniqueQuestions.get(questionKey);
+                                    if (item.score > existingItem.score) {
+                                        uniqueQuestions.set(questionKey, item);
+                                    }
+                                }
+                            });
                         }
                     }
                 }
             }
+            data = Array.from(uniqueQuestions.values());
         } else if (scope === 'total') {
-            // Get comprehensive total: management + all sites
-            // Add management system data
+            // Get unique questions from both management and sites
+            const uniqueQuestions = new Map();
+            
+            // Add management questions
             if (project.managementSystemAudit) {
                 for (const section in project.managementSystemAudit) {
                     if (Array.isArray(project.managementSystemAudit[section])) {
-                        data = data.concat(project.managementSystemAudit[section]);
+                        project.managementSystemAudit[section].forEach(item => {
+                            const questionKey = `management_${section}_${item.name}`;
+                            uniqueQuestions.set(questionKey, item);
+                        });
                     }
                 }
             }
-            // Add all sites data
+            
+            // Add unique site questions
             if (project.sites) {
                 for (const siteName in project.sites) {
                     const site = project.sites[siteName];
                     for (const section in site) {
                         if (Array.isArray(site[section])) {
-                            data = data.concat(site[section]);
+                            site[section].forEach(item => {
+                                const questionKey = `site_${section}_${item.name}`;
+                                if (!uniqueQuestions.has(questionKey)) {
+                                    uniqueQuestions.set(questionKey, item);
+                                } else {
+                                    // Use highest score if question exists
+                                    const existingItem = uniqueQuestions.get(questionKey);
+                                    if (item.score > existingItem.score) {
+                                        uniqueQuestions.set(questionKey, item);
+                                    }
+                                }
+                            });
                         }
                     }
                 }
             }
+            
+            data = Array.from(uniqueQuestions.values());
         } else {
-            // Get current site data only (default 'all' - current site only)
+            // Get current site data only
             if (project.currentSite && project.sites[project.currentSite]) {
                 const site = project.sites[project.currentSite];
                 for (const section in site) {
