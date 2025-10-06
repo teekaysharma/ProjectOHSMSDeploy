@@ -546,5 +546,9 @@ window.reportGeneration = {
     downloadHTMLReport,
     downloadJSONReport,
     printReport,
-    initializeReportGeneration
+    initializeReportGeneration,
+    captureChartsForReport,
+    initializeLogoUpload,
+    generateExecutiveReport,
+    exportToHTML
 };
