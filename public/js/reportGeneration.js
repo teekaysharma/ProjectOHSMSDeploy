@@ -653,22 +653,29 @@ function captureChartsForReport() {
         const charts = {};
         
         // Capture dashboard charts if they exist
-        if (window.app && window.app.charts) {
-            const chartElements = ['ratingChart', 'distributionChart', 'managementChart'];
-            
-            chartElements.forEach(chartId => {
-                const canvas = document.getElementById(chartId);
-                if (canvas) {
-                    try {
-                        charts[chartId] = canvas.toDataURL('image/png');
-                    } catch (error) {
-                        console.warn(`Could not capture chart ${chartId}:`, error);
-                        charts[chartId] = null;
-                    }
-                }
-            });
-        }
+        const chartElements = ['ratingChart', 'distributionChart', 'managementChart'];
         
+        chartElements.forEach(chartId => {
+            const canvas = document.getElementById(chartId);
+            if (canvas && canvas.getContext) {
+                try {
+                    // Check if canvas has been rendered
+                    const ctx = canvas.getContext('2d');
+                    if (ctx) {
+                        charts[chartId] = canvas.toDataURL('image/png', 0.8);
+                        console.log(`Successfully captured chart: ${chartId}`);
+                    }
+                } catch (error) {
+                    console.warn(`Could not capture chart ${chartId}:`, error);
+                    charts[chartId] = null;
+                }
+            } else {
+                console.warn(`Chart canvas not found or not ready: ${chartId}`);
+                charts[chartId] = null;
+            }
+        });
+        
+        console.log('Charts captured for report:', Object.keys(charts));
         return charts;
     } catch (error) {
         console.error('Error capturing charts:', error);
