@@ -838,7 +838,8 @@
             const distributionScopeButtons = [
                 { id: 'distributionChartScopeAll', scope: 'all' },
                 { id: 'distributionChartScopeManagement', scope: 'management' },
-                { id: 'distributionChartScopeAllSites', scope: 'all-sites' }
+                { id: 'distributionChartScopeAllSites', scope: 'all-sites' },
+                { id: 'distributionChartScopeTotal', scope: 'total' }
             ];
             
             distributionScopeButtons.forEach(({ id, scope }) => {
