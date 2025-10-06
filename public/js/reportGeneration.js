@@ -35,26 +35,102 @@ function generateAuditReport() {
     }
 }
 
-// Generate summary statistics
-function generateSummary(projectData, sitesData) {
-    const summary = {
-        totalSites: sitesData ? sitesData.length : 0,
-        completedSites: sitesData ? sitesData.filter(site => site.completed).length : 0,
-        averageSiteScore: 0,
-        projectScore: projectData ? projectData.score : 0,
-        overallCompliance: 0,
-        criticalIssues: 0,
-        recommendations: 0
-    };
-    
-    // Calculate average site score
-    if (sitesData && sitesData.length > 0) {
-        const completedSites = sitesData.filter(site => site.completed);
-        if (completedSites.length > 0) {
-            summary.averageSiteScore = Math.round(
-                completedSites.reduce((sum, site) => sum + site.score, 0) / completedSites.length
-            );
+// Generate comprehensive summary for report
+function generateReportSummary(project) {
+    try {
+        const summary = {
+            projectName: project.projectName || 'Default Project',
+            currentSite: project.currentSite || 'Default Site',
+            totalSites: project.sites ? Object.keys(project.sites).length : 0,
+            inspectionDate: document.getElementById('inspectionDate')?.value || new Date().toISOString().split('T')[0],
+            leadAuditor: project.leadAuditor || document.getElementById('leadAuditor')?.value || 'Not specified',
+            projectDirector: project.projectDirector || document.getElementById('projectDirector')?.value || 'Not specified',
+            overallScores: {},
+            siteScores: {},
+            managementScore: 0,
+            criticalIssues: [],
+            recommendations: 0
+        };
+        
+        // Calculate management system score
+        if (project.managementSystemAudit) {
+            let totalManagementScore = 0;
+            let totalManagementQuestions = 0;
+            
+            for (const section in project.managementSystemAudit) {
+                if (Array.isArray(project.managementSystemAudit[section])) {
+                    project.managementSystemAudit[section].forEach(item => {
+                        if (item.score > 0) {
+                            totalManagementScore += item.score;
+                            totalManagementQuestions++;
+                        }
+                        if (item.score === 1) {
+                            summary.criticalIssues.push({
+                                type: 'Management System',
+                                section: section,
+                                issue: item.name
+                            });
+                        }
+                    });
+                }
+            }
+            
+            summary.managementScore = totalManagementQuestions > 0 ? 
+                Math.round((totalManagementScore / totalManagementQuestions) * 100) / 100 : 0;
         }
+        
+        // Calculate site scores
+        if (project.sites) {
+            for (const siteName in project.sites) {
+                const site = project.sites[siteName];
+                let totalSiteScore = 0;
+                let totalSiteQuestions = 0;
+                
+                for (const section in site) {
+                    if (Array.isArray(site[section])) {
+                        site[section].forEach(item => {
+                            if (item.score > 0) {
+                                totalSiteScore += item.score;
+                                totalSiteQuestions++;
+                            }
+                            if (item.score === 1) {
+                                summary.criticalIssues.push({
+                                    type: 'Site Performance',
+                                    site: siteName,
+                                    section: section,
+                                    issue: item.name
+                                });
+                            }
+                        });
+                    }
+                }
+                
+                summary.siteScores[siteName] = totalSiteQuestions > 0 ? 
+                    Math.round((totalSiteScore / totalSiteQuestions) * 100) / 100 : 0;
+            }
+        }
+        
+        // Calculate overall scores using chart management functions
+        if (window.chartManagement && window.chartManagement.calculateOverallScore) {
+            summary.overallScores = {
+                management: window.chartManagement.calculateOverallScore('management'),
+                currentSite: window.chartManagement.calculateOverallScore('all'),
+                allSites: window.chartManagement.calculateOverallScore('all-sites'),
+                projectOverview: window.chartManagement.calculateOverallScore('total')
+            };
+        }
+        
+        return summary;
+    } catch (error) {
+        console.error('Error generating report summary:', error);
+        return {
+            projectName: 'Unknown Project',
+            totalSites: 0,
+            managementScore: 0,
+            siteScores: {},
+            criticalIssues: [],
+            overallScores: {}
+        };
     }
     
     // Calculate overall compliance
