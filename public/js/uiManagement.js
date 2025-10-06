@@ -914,6 +914,11 @@
         return project && project.sites ? Object.keys(project.sites) : [];
     }
     
+    function getCurrentProjects() {
+        return window.app && window.app.inspectionData && window.app.inspectionData.projects ? 
+               Object.keys(window.app.inspectionData.projects) : [];
+    }
+    
     function updateProjectsWithNewQuestion(type, section, questionText, applyToAllSites, specificSite) {
         for (const projectName in app.inspectionData.projects) {
             const project = app.inspectionData.projects[projectName];
