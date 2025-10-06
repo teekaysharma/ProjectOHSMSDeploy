@@ -533,6 +533,94 @@
         }
     }
 
+    // Initialize event listeners for chart scope buttons
+    function initializeChartScopeListeners() {
+        try {
+            // Set chart scope function
+            function setChartScope(scope) {
+                window.app.currentChartScope = scope;
+                updateDashboard();
+                console.log('Chart scope changed to:', scope);
+            }
+
+            // Rating chart scope buttons
+            const ratingScopeButtons = [
+                { id: 'ratingChartScopeAll', scope: 'all' },
+                { id: 'ratingChartScopeManagement', scope: 'management' },
+                { id: 'ratingChartScopeAllSites', scope: 'all-sites' }
+            ];
+            
+            ratingScopeButtons.forEach(({ id, scope }) => {
+                const button = document.getElementById(id);
+                if (button) {
+                    button.addEventListener('click', () => {
+                        // Update active state for rating chart buttons
+                        ratingScopeButtons.forEach(({ id: otherId }) => {
+                            const btn = document.getElementById(otherId);
+                            if (btn) btn.classList.remove('active');
+                        });
+                        button.classList.add('active');
+                        
+                        // Set scope and update charts
+                        setChartScope(scope);
+                    });
+                }
+            });
+            
+            // Distribution chart scope buttons
+            const distributionScopeButtons = [
+                { id: 'distributionChartScopeAll', scope: 'all' },
+                { id: 'distributionChartScopeManagement', scope: 'management' },
+                { id: 'distributionChartScopeAllSites', scope: 'all-sites' }
+            ];
+            
+            distributionScopeButtons.forEach(({ id, scope }) => {
+                const button = document.getElementById(id);
+                if (button) {
+                    button.addEventListener('click', () => {
+                        // Update active state for distribution chart buttons
+                        distributionScopeButtons.forEach(({ id: otherId }) => {
+                            const btn = document.getElementById(otherId);
+                            if (btn) btn.classList.remove('active');
+                        });
+                        button.classList.add('active');
+                        
+                        // Set scope and update charts
+                        setChartScope(scope);
+                    });
+                }
+            });
+            
+            // Main chart scope buttons
+            const mainScopeButtons = [
+                { id: 'chartScopeAll', scope: 'all' },
+                { id: 'chartScopeManagement', scope: 'management' },
+                { id: 'chartScopeAllSites', scope: 'all-sites' }
+            ];
+            
+            mainScopeButtons.forEach(({ id, scope }) => {
+                const button = document.getElementById(id);
+                if (button) {
+                    button.addEventListener('click', () => {
+                        // Update active state for main chart buttons
+                        mainScopeButtons.forEach(({ id: otherId }) => {
+                            const btn = document.getElementById(otherId);
+                            if (btn) btn.classList.remove('active');
+                        });
+                        button.classList.add('active');
+                        
+                        // Set scope and update charts
+                        setChartScope(scope);
+                    });
+                }
+            });
+            
+            console.log('Chart scope listeners initialized successfully');
+        } catch (error) {
+            console.error('Error initializing chart scope listeners:', error);
+        }
+    }
+
     // Initialize charts
     function initializeCharts() {
         try {
@@ -545,6 +633,9 @@
             
             // Set default scope
             window.app.currentChartScope = 'all';
+            
+            // Initialize event listeners
+            initializeChartScopeListeners();
             
             // Update dashboard
             updateDashboard();
