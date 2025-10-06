@@ -1367,6 +1367,80 @@ body {
 .btn-orange:hover {
     background-color: #e56717;
 }
+/* Questions Tab Interface */
+.questions-tabs-container {
+    background: white;
+    border-radius: 12px;
+    border: 2px solid #e0e6ed;
+    overflow: hidden;
+    margin-top: 20px;
+}
+.questions-tab-navigation {
+    display: flex;
+    background: #f8f9fa;
+    border-bottom: 2px solid #e0e6ed;
+}
+.questions-tab {
+    flex: 1;
+    padding: 15px 20px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #666;
+    transition: all 0.3s ease;
+    position: relative;
+}
+.questions-tab:hover {
+    background: rgba(102, 126, 234, 0.1);
+    color: #4c51bf;
+}
+.questions-tab.active {
+    background: #4c51bf;
+    color: white;
+}
+.questions-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #4c51bf;
+}
+.tab-icon {
+    font-size: 18px;
+}
+.tab-count {
+    font-size: 12px;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 2px 8px;
+    border-radius: 12px;
+    margin-left: auto;
+}
+.questions-tab.active .tab-count {
+    background: rgba(255, 255, 255, 0.3);
+}
+.questions-tab-content {
+    min-height: 600px;
+    position: relative;
+}
+.questions-panel {
+    display: none;
+    padding: 25px;
+    animation: fadeIn 0.3s ease;
+}
+.questions-panel.active {
+    display: block;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 /* Duplicate removed - styles moved above */
 .question-tabs {
     display: flex;
