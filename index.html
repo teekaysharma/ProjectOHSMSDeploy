@@ -371,7 +371,12 @@
                         </div>
                         <div id="logoUploadArea">
                             <p style="margin-bottom: 10px; color: #666;">Company Logo</p>
+                            <input type="file" id="logoFileInput" accept="image/*" style="display: none;">
                             <button type="button" class="logo-upload-btn" id="uploadLogoBtn">Upload Logo</button>
+                            <button type="button" class="btn btn-sm btn-danger" id="removeLogoBtn" style="display: none;">Remove Logo</button>
+                            <div id="logoPreview" class="logo-preview" style="display: none;">
+                                <img id="logoImage" alt="Company Logo Preview" class="logo-preview-img">
+                            </div>
                             <input type="file" id="logoFileInput" accept="image/*" style="display: none;">
                         </div>
                         <button type="button" class="logo-remove-btn" id="removeLogoBtn" style="display: none;">Remove Logo</button>
