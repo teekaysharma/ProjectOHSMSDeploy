@@ -215,9 +215,104 @@ function generateActionPlan(recommendations) {
     return actionPlan;
 }
 
+// Update recommendations display
+function updateRecommendations() {
+    try {
+        console.log('Updating recommendations...');
+        const recommendations = generateRecommendations();
+        displayRecommendations(recommendations);
+        
+        // Store recommendations for editing
+        if (window.app) {
+            window.app.currentRecommendations = recommendations;
+        }
+        
+    } catch (error) {
+        console.error('Error updating recommendations:', error);
+    }
+}
+
+// Initialize recommendations when page loads
+function initializeRecommendations() {
+    try {
+        console.log('Initializing recommendations...');
+        
+        // Set up edit functionality
+        setupRecommendationEditing();
+        
+        // Generate initial recommendations
+        updateRecommendations();
+        
+    } catch (error) {
+        console.error('Error initializing recommendations:', error);
+    }
+}
+
+// Set up recommendation editing functionality
+function setupRecommendationEditing() {
+    const editBtn = document.getElementById('editRecommendationsBtn');
+    const regenerateBtn = document.getElementById('regenerateRecommendationsBtn');
+    const saveBtn = document.getElementById('saveRecommendationsBtn');
+    const cancelBtn = document.getElementById('cancelEditRecommendationsBtn');
+    const content = document.getElementById('recommendationsContent');
+    
+    if (editBtn) {
+        editBtn.addEventListener('click', () => {
+            if (content) {
+                content.contentEditable = 'true';
+                content.style.border = '2px dashed #667eea';
+                content.focus();
+                
+                if (saveBtn) saveBtn.style.display = 'inline-block';
+                if (cancelBtn) cancelBtn.style.display = 'inline-block';
+            }
+        });
+    }
+    
+    if (regenerateBtn) {
+        regenerateBtn.addEventListener('click', () => {
+            updateRecommendations();
+        });
+    }
+    
+    if (saveBtn) {
+        saveBtn.addEventListener('click', () => {
+            if (content) {
+                content.contentEditable = 'false';
+                content.style.border = '1px solid #ddd';
+                
+                // Store custom recommendations
+                if (window.app) {
+                    window.app.customRecommendations = content.innerHTML;
+                }
+                
+                saveBtn.style.display = 'none';
+                if (cancelBtn) cancelBtn.style.display = 'none';
+            }
+        });
+    }
+    
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', () => {
+            if (content) {
+                content.contentEditable = 'false';
+                content.style.border = '1px solid #ddd';
+                
+                // Restore original recommendations
+                updateRecommendations();
+                
+                saveBtn.style.display = 'none';
+                cancelBtn.style.display = 'none';
+            }
+        });
+    }
+}
+
 // Export functions for use in other modules
 window.recommendations = {
     generateRecommendations,
     displayRecommendations,
-    generateActionPlan
+    generateActionPlan,
+    updateRecommendations,
+    initializeRecommendations
 };
