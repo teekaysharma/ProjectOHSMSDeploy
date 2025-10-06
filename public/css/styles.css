@@ -1187,10 +1187,7 @@ body {
     gap: 6px;
     flex-shrink: 0;
 }
-.question-management h3 {
-    color: #4c51bf;
-    margin-bottom: 20px;
-}
+/* Duplicate removed - styles moved above */
 .question-tabs {
     display: flex;
     margin-bottom: 20px;
