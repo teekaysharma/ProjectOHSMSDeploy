@@ -882,9 +882,42 @@ body {
     font-weight: 500;
 }
 .site-list {
-    display: grid;
-    gap: 15px;
-    margin-bottom: 20px;
+    margin-top: 25px;
+}
+.site-list h4 {
+    color: #4c51bf;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+.site-list-container {
+    background: white;
+    border-radius: 10px;
+    border: 2px solid #e0e6ed;
+    min-height: 100px;
+    padding: 15px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+.site-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    border: 1px solid #e0e6ed;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    background: #fafbfc;
+}
+.site-item:last-child {
+    margin-bottom: 0;
+}
+.site-name {
+    font-weight: 600;
+    color: #2c3e50;
+}
+.site-actions {
+    display: flex;
+    gap: 8px;
 }
 .site-item {
     display: flex;
