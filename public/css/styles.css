@@ -240,6 +240,27 @@ body {
     background: #667eea;
     color: white;
 }
+.chart-view-controls {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+.chart-view-btn {
+    background: #e0e6ed;
+    border: 1px solid #c0c6cd;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 12px;
+    font-weight: 600;
+}
+.chart-view-btn.active {
+    background: #4c51bf;
+    color: white;
+    border-color: #4c51bf;
+}
 .chart-container h3 {
     color: #2c3e50;
     margin-bottom: 20px;
