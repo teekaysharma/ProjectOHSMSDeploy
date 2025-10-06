@@ -133,11 +133,20 @@ function generateReportSummary(project) {
         console.error('Error generating report summary:', error);
         return {
             projectName: 'Unknown Project',
+            currentSite: 'Unknown Site',
             totalSites: 0,
+            inspectionDate: new Date().toISOString().split('T')[0],
+            leadAuditor: 'Not specified',
+            projectDirector: 'Not specified',
             managementScore: 0,
             siteScores: {},
             criticalIssues: [],
-            overallScores: {}
+            overallScores: {
+                management: { score: 0, rating: 'N/A', percentage: 0 },
+                currentSite: { score: 0, rating: 'N/A', percentage: 0 },
+                allSites: { score: 0, rating: 'N/A', percentage: 0 },
+                projectOverview: { score: 0, rating: 'N/A', percentage: 0 }
+            }
         };
     }
     
