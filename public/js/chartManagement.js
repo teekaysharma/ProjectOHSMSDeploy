@@ -706,7 +706,8 @@
                 overallRatingElement.style.color = ratingDetails.color;
             }
             if (totalItemsElement) {
-                totalItemsElement.textContent = `${overallScore.totalItems} of ${overallScore.totalQuestions}`;
+                const scopeLabel = getScopeLabel(scope);
+                totalItemsElement.textContent = `${overallScore.totalItems} of ${overallScore.totalQuestions} (${scopeLabel})`;
             }
             
             // Wait for Chart.js to be available before rendering charts
