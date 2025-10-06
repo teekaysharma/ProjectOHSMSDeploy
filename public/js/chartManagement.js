@@ -1086,7 +1086,8 @@
         updateDashboard,
         renderRatingChart,
         renderDistributionChart,
-        renderManagementChart
+        renderManagementChart,
+        calculateOverallScore
     };
     
     // Also expose individual functions
@@ -1095,4 +1096,5 @@
     window.renderRatingChart = renderRatingChart;
     window.renderDistributionChart = renderDistributionChart;
     window.renderManagementChart = renderManagementChart;
+    window.calculateOverallScore = calculateOverallScore;
 })();
