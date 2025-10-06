@@ -1307,6 +1307,55 @@
         }
     }
     
+    // Update header project selector dropdown
+    function updateProjectSelector() {
+        try {
+            const projectSelector = document.getElementById('projectSelector');
+            if (!projectSelector) return;
+            
+            const projects = getCurrentProjects();
+            if (projects.length === 0) {
+                projectSelector.innerHTML = '<option value="">No projects available</option>';
+                return;
+            }
+            
+            let html = '<option value="">Select a project</option>';
+            const currentProjectName = window.app && window.app.currentProject ? window.app.currentProject : '';
+            
+            projects.forEach(projectName => {
+                const selected = currentProjectName === projectName ? 'selected' : '';
+                html += `<option value="${projectName}" ${selected}>${projectName}</option>`;
+            });
+            
+            projectSelector.innerHTML = html;
+            
+            // Add event listener for project selection changes
+            projectSelector.onchange = (e) => {
+                if (e.target.value && window.app) {
+                    window.app.currentProject = e.target.value;
+                    if (window.app.saveData) window.app.saveData();
+                    
+                    // Update site selector for new project
+                    updateSiteSelector();
+                    
+                    // Update dashboard and charts
+                    if (typeof updateAllDashboardComponents === 'function') {
+                        updateAllDashboardComponents();
+                    }
+                    
+                    // Update management lists
+                    updateProjectsList();
+                    updateSitesList();
+                    
+                    console.log('Switched to project:', e.target.value);
+                }
+            };
+            
+        } catch (error) {
+            console.error('Error updating project selector:', error);
+        }
+    }
+
     // Update projects list
     function updateProjectsList() {
         try {
