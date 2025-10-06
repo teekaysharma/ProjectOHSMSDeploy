@@ -195,7 +195,7 @@ function initializeReportGeneration() {
         // Initialize logo upload functionality
         initializeLogoUpload();
         
-        // Initialize report generation buttons
+        // Initialize new report generation buttons
         const generateBtn = document.getElementById('generateDetailedReportBtn');
         if (generateBtn) {
             generateBtn.addEventListener('click', generateExecutiveReport);
@@ -205,6 +205,9 @@ function initializeReportGeneration() {
         if (exportHtmlBtn) {
             exportHtmlBtn.addEventListener('click', exportToHTML);
         }
+        
+        // Initialize legacy report generation
+        initializeLegacyReportGeneration();
         
         console.log('Report generation initialized successfully');
     } catch (error) {
