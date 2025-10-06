@@ -247,7 +247,7 @@ function createFullHTMLReport(report) {
     return createExecutiveReportHTML(report);
 }
 
-// Display report in new window
+// Display report in new window with fallback for popup blockers
 function displayReportInNewWindow(htmlContent, title) {
     const newWindow = window.open('', '_blank');
     if (newWindow) {
@@ -255,7 +255,18 @@ function displayReportInNewWindow(htmlContent, title) {
         newWindow.document.close();
         newWindow.focus();
     } else {
-        alert('Please allow pop-ups to view the report in a new window');
+        // Fallback for popup blockers - create downloadable HTML file
+        console.log('Popup blocked, creating downloadable HTML file instead');
+        const blob = new Blob([htmlContent], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${title.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.html`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        alert('Report downloaded as HTML file since pop-ups are blocked. You can open it in your browser.');
     }
 }
 
