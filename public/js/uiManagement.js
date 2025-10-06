@@ -1273,9 +1273,11 @@
             const refreshProjectsBtn = document.getElementById('refreshProjectsBtn');
             if (refreshProjectsBtn) {
                 refreshProjectsBtn.addEventListener('click', () => {
+                    updateProjectSelector();
+                    updateSiteSelector();
                     updateProjectsList();
                     updateSitesList();
-                    console.log('Manual refresh triggered for projects and sites');
+                    console.log('Manual refresh triggered for projects, sites, and selectors');
                 });
             }
             
