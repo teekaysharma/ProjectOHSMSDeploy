@@ -318,7 +318,7 @@
                 percentage: Math.round(percentage),
                 rating,
                 totalItems: filteredData.length,
-                totalQuestions: data.length
+                totalQuestions: uniqueCount.totalQuestions
             };
         } catch (error) {
             console.error('Error calculating overall score:', error);
