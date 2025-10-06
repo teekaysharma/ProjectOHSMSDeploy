@@ -857,6 +857,14 @@ body {
     display: flex;
     gap: 8px;
 }
+.project-item.current {
+    border-color: #4c51bf;
+    background: #f0f8ff;
+}
+.project-item.current .project-name {
+    color: #4c51bf;
+    font-weight: 700;
+}
 
 /* Site Management Styles */
 .site-management {
