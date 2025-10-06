@@ -184,6 +184,15 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('✓ Report Generation initialized (fallback)');
         }
         
+        // Initialize recommendations
+        if (window.recommendations && window.recommendations.initializeRecommendations) {
+            window.recommendations.initializeRecommendations();
+            console.log('✓ Recommendations initialized');
+        } else if (typeof initializeRecommendations === 'function') {
+            initializeRecommendations();
+            console.log('✓ Recommendations initialized (fallback)');
+        }
+        
         // Initialize charts after Chart.js loads
         const initCharts = () => {
             if (typeof Chart !== 'undefined') {
