@@ -784,6 +784,35 @@ body {
 .btn-green {
     background: linear-gradient(135deg, #4CAF50, #81C784);
 }
+/* Project Management Settings Styles */
+.project-management-settings {
+    background: #f0f8ff;
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 30px;
+    order: 0;
+    position: relative;
+    top: 0;
+}
+.project-management-settings h3 {
+    color: #4c51bf;
+    margin-bottom: 20px;
+}
+.project-management-settings .info-note {
+    background: #e6f3ff;
+    border-left: 4px solid #4299e1;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    color: #2b6cb0;
+    font-weight: 500;
+}
+.project-management-settings .project-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
 /* Site Management Styles */
 .site-management {
     background: #f8f9ff;
