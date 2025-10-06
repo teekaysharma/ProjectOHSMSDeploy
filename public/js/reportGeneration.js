@@ -111,12 +111,20 @@ function generateReportSummary(project) {
         }
         
         // Calculate overall scores using chart management functions
-        if (window.chartManagement && window.chartManagement.calculateOverallScore) {
+        if (typeof calculateOverallScore === 'function') {
             summary.overallScores = {
-                management: window.chartManagement.calculateOverallScore('management'),
-                currentSite: window.chartManagement.calculateOverallScore('all'),
-                allSites: window.chartManagement.calculateOverallScore('all-sites'),
-                projectOverview: window.chartManagement.calculateOverallScore('total')
+                management: calculateOverallScore('management'),
+                currentSite: calculateOverallScore('all'),
+                allSites: calculateOverallScore('all-sites'),
+                projectOverview: calculateOverallScore('total')
+            };
+        } else {
+            console.warn('calculateOverallScore function not available, using basic calculations');
+            summary.overallScores = {
+                management: { score: summary.managementScore, rating: 'N/A', percentage: 0 },
+                currentSite: { score: 0, rating: 'N/A', percentage: 0 },
+                allSites: { score: 0, rating: 'N/A', percentage: 0 },
+                projectOverview: { score: 0, rating: 'N/A', percentage: 0 }
             };
         }
         
