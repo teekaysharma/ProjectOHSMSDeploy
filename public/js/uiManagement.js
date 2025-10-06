@@ -1296,6 +1296,8 @@
             if (systemSettingsTab) {
                 systemSettingsTab.addEventListener('click', () => {
                     setTimeout(() => {
+                        updateProjectSelector();
+                        updateSiteSelector();
                         updateProjectsList();
                         updateSitesList();
                         updateQuestionsList();
