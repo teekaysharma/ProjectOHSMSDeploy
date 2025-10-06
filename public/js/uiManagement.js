@@ -791,29 +791,129 @@
         }
     }
     
-    // Add new question
-    function addQuestion(type, section) {
+    // Add question to specific section with site selection options
+    function addQuestionToSection(type, section) {
         try {
             const questionText = prompt('Enter the question text:');
             if (!questionText) return;
             
+            let applyToAllSites = true;
+            let specificSite = null;
+            
+            if (type === 'site') {
+                const sites = getCurrentProjectSites();
+                if (sites.length > 1) {
+                    const choice = confirm(`Add this question to all sites?\n\nClick OK for ALL SITES\nClick Cancel to choose a specific site`);
+                    if (!choice) {
+                        specificSite = prompt(`Enter site name or choose from: ${sites.join(', ')}`);
+                        if (!specificSite || !sites.includes(specificSite)) {
+                            alert('Invalid site name. Question not added.');
+                            return;
+                        }
+                        applyToAllSites = false;
+                    }
+                }
+            }
+            
             // Add to master config
+            if (!app.masterConfig[type][section]) {
+                app.masterConfig[type][section] = [];
+            }
             app.masterConfig[type][section].push(questionText);
             
-            // Update all projects with the new question
-            for (const projectName in app.inspectionData.projects) {
-                const project = app.inspectionData.projects[projectName];
+            // Update projects with the new question
+            updateProjectsWithNewQuestion(type, section, questionText, applyToAllSites, specificSite);
+            
+            if (typeof saveData === 'function') {
+                saveData();
+            }
+            updateQuestionsList();
+            
+            console.log(`Question added to ${type} - ${section}${specificSite ? ` (site: ${specificSite})` : ' (all sites)'}`);
+        } catch (error) {
+            console.error('Error adding question:', error);
+        }
+    }
+    
+    // Legacy function for backward compatibility
+    function addQuestion(type, section) {
+        addQuestionToSection(type, section);
+    }
+    
+    // Add section with site selection options
+    function addSectionWithOptions(type) {
+        try {
+            const inputId = `new${type.charAt(0).toUpperCase() + type.slice(1)}SectionName`;
+            const input = document.getElementById(inputId);
+            const sectionName = input.value.trim();
+            
+            if (!sectionName) {
+                alert('Please enter a section name');
+                return;
+            }
+            
+            if (app.masterConfig[type][sectionName]) {
+                alert('A section with this name already exists');
+                return;
+            }
+            
+            let applyToAllSites = true;
+            let specificSite = null;
+            
+            if (type === 'site') {
+                const allSitesCheckbox = document.getElementById(`addTo${type.charAt(0).toUpperCase() + type.slice(1)}AllSites`);
+                const siteSelector = document.getElementById(`specific${type.charAt(0).toUpperCase() + type.slice(1)}Site`);
                 
-                if (type === 'management') {
-                    if (!project.managementSystemAudit[section]) {
-                        project.managementSystemAudit[section] = [];
+                applyToAllSites = allSitesCheckbox.checked;
+                if (!applyToAllSites) {
+                    specificSite = siteSelector.value;
+                    if (!specificSite) {
+                        alert('Please select a specific site or check "Add to all sites"');
+                        return;
                     }
-                    project.managementSystemAudit[section].push({
-                        name: questionText,
-                        score: 0,
-                        comment: ''
-                    });
-                } else {
+                }
+            }
+            
+            // Add new section to master config
+            app.masterConfig[type][sectionName] = [];
+            
+            // Update all projects with the new section
+            updateProjectsWithNewSection(type, sectionName, applyToAllSites, specificSite);
+            
+            input.value = '';
+            if (typeof saveData === 'function') {
+                saveData();
+            }
+            updateQuestionsList();
+            
+            console.log(`Section "${sectionName}" added to ${type}${specificSite ? ` (site: ${specificSite})` : ' (all sites)'}`);
+        } catch (error) {
+            console.error('Error adding section:', error);
+        }
+    }
+    
+    // Helper functions for project updates
+    function getCurrentProjectSites() {
+        const project = window.app ? window.app.getCurrentProject() : null;
+        return project && project.sites ? Object.keys(project.sites) : [];
+    }
+    
+    function updateProjectsWithNewQuestion(type, section, questionText, applyToAllSites, specificSite) {
+        for (const projectName in app.inspectionData.projects) {
+            const project = app.inspectionData.projects[projectName];
+            
+            if (type === 'management') {
+                if (!project.managementSystemAudit[section]) {
+                    project.managementSystemAudit[section] = [];
+                }
+                project.managementSystemAudit[section].push({
+                    name: questionText,
+                    score: 0,
+                    comment: ''
+                });
+            } else {
+                // Site questions
+                if (applyToAllSites) {
                     for (const siteName in project.sites) {
                         if (!project.sites[siteName][section]) {
                             project.sites[siteName][section] = [];
@@ -824,17 +924,159 @@
                             comment: ''
                         });
                     }
+                } else if (specificSite && project.sites[specificSite]) {
+                    if (!project.sites[specificSite][section]) {
+                        project.sites[specificSite][section] = [];
+                    }
+                    project.sites[specificSite][section].push({
+                        name: questionText,
+                        score: 0,
+                        comment: ''
+                    });
+                }
+            }
+        }
+    }
+    
+    function updateProjectsWithNewSection(type, sectionName, applyToAllSites, specificSite) {
+        for (const projectName in app.inspectionData.projects) {
+            const project = app.inspectionData.projects[projectName];
+            
+            if (type === 'management') {
+                project.managementSystemAudit[sectionName] = [];
+            } else {
+                // Site sections
+                if (applyToAllSites) {
+                    for (const siteName in project.sites) {
+                        project.sites[siteName][sectionName] = [];
+                    }
+                } else if (specificSite && project.sites[specificSite]) {
+                    project.sites[specificSite][sectionName] = [];
+                }
+            }
+        }
+    }
+    
+    // New enhanced functions
+    function editSectionName(type, oldSectionName) {
+        try {
+            const newSectionName = prompt('Enter new section name:', oldSectionName);
+            if (!newSectionName || newSectionName === oldSectionName) return;
+            
+            if (app.masterConfig[type][newSectionName]) {
+                alert('A section with this name already exists');
+                return;
+            }
+            
+            // Update master config
+            app.masterConfig[type][newSectionName] = app.masterConfig[type][oldSectionName];
+            delete app.masterConfig[type][oldSectionName];
+            
+            // Update all projects
+            for (const projectName in app.inspectionData.projects) {
+                const project = app.inspectionData.projects[projectName];
+                
+                if (type === 'management') {
+                    if (project.managementSystemAudit[oldSectionName]) {
+                        project.managementSystemAudit[newSectionName] = project.managementSystemAudit[oldSectionName];
+                        delete project.managementSystemAudit[oldSectionName];
+                    }
+                } else {
+                    for (const siteName in project.sites) {
+                        if (project.sites[siteName][oldSectionName]) {
+                            project.sites[siteName][newSectionName] = project.sites[siteName][oldSectionName];
+                            delete project.sites[siteName][oldSectionName];
+                        }
+                    }
                 }
             }
             
             if (typeof saveData === 'function') {
                 saveData();
             }
-            renderQuestionManagement();
+            updateQuestionsList();
             
-            console.log(`Question added to ${type} - ${section}`);
+            console.log(`Section renamed from "${oldSectionName}" to "${newSectionName}"`);
         } catch (error) {
-            console.error('Error adding question:', error);
+            console.error('Error editing section name:', error);
+        }
+    }
+    
+    function deleteSection(type, sectionName) {
+        try {
+            if (!confirm(`Are you sure you want to delete section "${sectionName}" and all its questions?\n\nThis action cannot be undone.`)) {
+                return;
+            }
+            
+            // Remove from master config
+            delete app.masterConfig[type][sectionName];
+            
+            // Remove from all projects
+            for (const projectName in app.inspectionData.projects) {
+                const project = app.inspectionData.projects[projectName];
+                
+                if (type === 'management') {
+                    delete project.managementSystemAudit[sectionName];
+                } else {
+                    for (const siteName in project.sites) {
+                        delete project.sites[siteName][sectionName];
+                    }
+                }
+            }
+            
+            if (typeof saveData === 'function') {
+                saveData();
+            }
+            updateQuestionsList();
+            
+            console.log(`Section "${sectionName}" deleted from ${type}`);
+        } catch (error) {
+            console.error('Error deleting section:', error);
+        }
+    }
+    
+    function moveQuestion(type, section, index) {
+        try {
+            const questions = app.masterConfig[type][section];
+            const questionText = questions[index];
+            const newPosition = prompt(`Move question "${questionText}" to position (1-${questions.length}):`);
+            
+            if (!newPosition || isNaN(newPosition)) return;
+            
+            const newIndex = parseInt(newPosition) - 1;
+            if (newIndex < 0 || newIndex >= questions.length || newIndex === index) return;
+            
+            // Move in master config
+            questions.splice(index, 1);
+            questions.splice(newIndex, 0, questionText);
+            
+            // Update all projects
+            for (const projectName in app.inspectionData.projects) {
+                const project = app.inspectionData.projects[projectName];
+                
+                if (type === 'management') {
+                    if (project.managementSystemAudit[section]) {
+                        const item = project.managementSystemAudit[section].splice(index, 1)[0];
+                        project.managementSystemAudit[section].splice(newIndex, 0, item);
+                    }
+                } else {
+                    for (const siteName in project.sites) {
+                        if (project.sites[siteName][section]) {
+                            const item = project.sites[siteName][section].splice(index, 1)[0];
+                            project.sites[siteName][section].splice(newIndex, 0, item);
+                        }
+                    }
+                }
+            }
+            
+            if (typeof saveData === 'function') {
+                saveData();
+            }
+            updateQuestionsList();
+            
+            console.log(`Question moved from position ${index + 1} to ${newIndex + 1}`);
+        } catch (error) {
+            console.error('Error moving question:', error);
         }
     }
     
