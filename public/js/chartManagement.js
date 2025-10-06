@@ -46,6 +46,27 @@
                     }
                 }
             }
+        } else if (scope === 'total') {
+            // Get comprehensive total: management + all sites
+            // Add management system data
+            if (project.managementSystemAudit) {
+                for (const section in project.managementSystemAudit) {
+                    if (Array.isArray(project.managementSystemAudit[section])) {
+                        data = data.concat(project.managementSystemAudit[section]);
+                    }
+                }
+            }
+            // Add all sites data
+            if (project.sites) {
+                for (const siteName in project.sites) {
+                    const site = project.sites[siteName];
+                    for (const section in site) {
+                        if (Array.isArray(site[section])) {
+                            data = data.concat(site[section]);
+                        }
+                    }
+                }
+            }
         } else {
             // Get current site data + management data (default 'all')
             // Add management system data
