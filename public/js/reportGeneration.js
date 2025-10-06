@@ -3,28 +3,36 @@
 
 // Generate comprehensive audit report
 function generateAuditReport() {
-    const projectData = window.projectManagement?.getCurrentProject();
-    const sitesData = window.siteManagement?.getCurrentSites();
-    const template = window.dataManagement?.getCurrentTemplate();
-    
-    if (!projectData && (!sitesData || sitesData.length === 0)) {
-        alert('No audit data available to generate report.');
-        return;
+    try {
+        const project = window.app ? window.app.getCurrentProject() : null;
+        
+        if (!project) {
+            alert('No audit data available to generate report.');
+            return null;
+        }
+        
+        const report = {
+            metadata: {
+                generatedDate: new Date().toISOString(),
+                generatedBy: 'OHS Management System Audit Tool',
+                version: '2.3',
+                reportTitle: document.getElementById('reportTitle')?.value || 'OCCUPATIONAL HEALTH & SAFETY AUDIT REPORT',
+                reportSubtitle: document.getElementById('reportSubtitle')?.value || 'Management System & Site Performance Audit',
+                companyName: document.getElementById('companyName')?.value || '',
+                reportDescription: document.getElementById('reportDescription')?.value || ''
+            },
+            project: project,
+            summary: generateReportSummary(project),
+            recommendations: window.recommendations?.generateRecommendations() || [],
+            charts: captureChartsForReport()
+        };
+        
+        return report;
+    } catch (error) {
+        console.error('Error generating audit report:', error);
+        alert('Error generating report. Please check the console for details.');
+        return null;
     }
-    
-    const report = {
-        metadata: {
-            generatedDate: new Date().toISOString(),
-            generatedBy: 'OHS Management System Audit Tool',
-            version: '2.3'
-        },
-        project: projectData,
-        sites: sitesData,
-        summary: generateSummary(projectData, sitesData),
-        recommendations: window.recommendations?.generateRecommendations(projectData, sitesData) || []
-    };
-    
-    return report;
 }
 
 // Generate summary statistics
