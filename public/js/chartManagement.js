@@ -470,8 +470,8 @@
             auditTypes['Management System'] = filteredData;
         } else if (scope === 'all-sites') {
             auditTypes['Site Performance'] = filteredData;
-        } else {
-            // For 'all' and 'total' scope, we need to separate the data
+        } else if (scope === 'total') {
+            // For 'total' scope, we need to separate the data
             const project = window.app.getCurrentProject();
             if (project) {
                 let managementData = [];
@@ -486,9 +486,8 @@
                     }
                 }
                 
-                // Get site data based on scope
-                if (scope === 'total' && project.sites) {
-                    // Get all sites
+                // Get all sites data
+                if (project.sites) {
                     for (const siteName in project.sites) {
                         const site = project.sites[siteName];
                         for (const section in site) {
@@ -497,19 +496,14 @@
                             }
                         }
                     }
-                } else if (project.currentSite && project.sites[project.currentSite]) {
-                    // Get current site
-                    const site = project.sites[project.currentSite];
-                    for (const section in site) {
-                        if (Array.isArray(site[section])) {
-                            siteData = siteData.concat(site[section]);
-                        }
-                    }
                 }
                 
                 auditTypes['Management System'] = getFilteredDataForCalculations(managementData);
                 auditTypes['Site Performance'] = getFilteredDataForCalculations(siteData);
             }
+        } else {
+            // For 'all' scope (Current Site), show only site performance
+            auditTypes['Site Performance'] = filteredData;
         }
         
         // Calculate average scores for each audit type (excluding score 0)
