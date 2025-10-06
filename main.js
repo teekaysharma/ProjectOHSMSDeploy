@@ -211,14 +211,22 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Load default template if no questions exist
         setTimeout(() => {
+            console.log('Checking if template needs to be loaded...');
+            console.log('app.hasQuestions():', app.hasQuestions());
+            console.log('Master config:', app.masterConfig);
+            
             // Check if we need to load default template based on questions availability
             if (!app.hasQuestions()) {
                 console.log('No questions found, loading default template...');
                 if (typeof loadDefaultTemplate === 'function') {
                     loadDefaultTemplate(true); // Skip confirmation for initial load
+                } else {
+                    console.error('loadDefaultTemplate function not found');
                 }
+            } else {
+                console.log('Questions already exist, skipping template load');
             }
-        }, 1000);
+        }, 1500);
         
         console.log('🎉 OHS Management System Audit Tool fully initialized!');
         
