@@ -1031,5 +1031,6 @@ window.reportGeneration = {
     captureChartsForReport,
     initializeLogoUpload,
     generateExecutiveReport,
-    exportToHTML
+    exportToHTML,
+    initializeReportGeneration
 };
