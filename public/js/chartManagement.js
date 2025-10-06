@@ -813,7 +813,8 @@
             const ratingScopeButtons = [
                 { id: 'ratingChartScopeAll', scope: 'all' },
                 { id: 'ratingChartScopeManagement', scope: 'management' },
-                { id: 'ratingChartScopeAllSites', scope: 'all-sites' }
+                { id: 'ratingChartScopeAllSites', scope: 'all-sites' },
+                { id: 'ratingChartScopeTotal', scope: 'total' }
             ];
             
             ratingScopeButtons.forEach(({ id, scope }) => {
