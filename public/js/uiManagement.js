@@ -919,11 +919,25 @@
                Object.keys(window.app.inspectionData.projects) : [];
     }
     
-    function updateProjectsWithNewQuestion(type, section, questionText, applyToAllSites, specificSite) {
-        for (const projectName in app.inspectionData.projects) {
-            const project = app.inspectionData.projects[projectName];
-            
-            if (type === 'management') {
+    function updateProjectsWithNewQuestion(type, section, questionText, applyToAll, specificTarget) {
+        if (type === 'management') {
+            // Management questions are project-based
+            if (applyToAll) {
+                // Add to all projects
+                for (const projectName in app.inspectionData.projects) {
+                    const project = app.inspectionData.projects[projectName];
+                    if (!project.managementSystemAudit[section]) {
+                        project.managementSystemAudit[section] = [];
+                    }
+                    project.managementSystemAudit[section].push({
+                        name: questionText,
+                        score: 0,
+                        comment: ''
+                    });
+                }
+            } else if (specificTarget && app.inspectionData.projects[specificTarget]) {
+                // Add to specific project only
+                const project = app.inspectionData.projects[specificTarget];
                 if (!project.managementSystemAudit[section]) {
                     project.managementSystemAudit[section] = [];
                 }
@@ -932,9 +946,14 @@
                     score: 0,
                     comment: ''
                 });
-            } else {
-                // Site questions
-                if (applyToAllSites) {
+            }
+        } else {
+            // Site questions are site-based (within current project)
+            for (const projectName in app.inspectionData.projects) {
+                const project = app.inspectionData.projects[projectName];
+                
+                if (applyToAll) {
+                    // Add to all sites in this project
                     for (const siteName in project.sites) {
                         if (!project.sites[siteName][section]) {
                             project.sites[siteName][section] = [];
@@ -945,11 +964,12 @@
                             comment: ''
                         });
                     }
-                } else if (specificSite && project.sites[specificSite]) {
-                    if (!project.sites[specificSite][section]) {
-                        project.sites[specificSite][section] = [];
+                } else if (specificTarget && project.sites[specificTarget]) {
+                    // Add to specific site only
+                    if (!project.sites[specificTarget][section]) {
+                        project.sites[specificTarget][section] = [];
                     }
-                    project.sites[specificSite][section].push({
+                    project.sites[specificTarget][section].push({
                         name: questionText,
                         score: 0,
                         comment: ''
