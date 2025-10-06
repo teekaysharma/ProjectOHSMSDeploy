@@ -1551,16 +1551,19 @@
                 <h4>Add New Section</h4>
                 <div class="add-section-form">
                     <input type="text" id="new${type.charAt(0).toUpperCase() + type.slice(1)}SectionName" placeholder="Enter section name" class="section-name-input">
-                    <div class="add-section-options">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="addTo${type.charAt(0).toUpperCase() + type.slice(1)}AllSites" ${type === 'site' ? 'checked' : ''}>
-                            <span>Add to all sites</span>
-                        </label>
-                        <select id="specific${type.charAt(0).toUpperCase() + type.slice(1)}Site" class="site-selector-small" style="display: ${type === 'site' ? 'none' : 'block'};">
-                            <option value="">Select specific site</option>
-                        </select>
-                    </div>
+                    ${type === 'site' ? `
+                        <div class="add-section-options">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="addTo${type.charAt(0).toUpperCase() + type.slice(1)}AllSites" checked>
+                                <span>Add to all sites</span>
+                            </label>
+                            <select id="specific${type.charAt(0).toUpperCase() + type.slice(1)}Site" class="site-selector-small" style="display: none;">
+                                <option value="">Select specific site</option>
+                            </select>
+                        </div>
+                    ` : ''}
                     <button class="btn btn-green" onclick="addSectionWithOptions('${type}')">Add Section</button>
+                    ${type === 'management' ? '<p class="help-text">Management sections will be added based on project selection during creation.</p>' : ''}
                 </div>
             </div>
             
