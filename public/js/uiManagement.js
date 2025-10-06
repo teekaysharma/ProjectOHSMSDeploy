@@ -19,6 +19,9 @@
         // Initialize recommendations editing
         initializeRecommendationsEditing();
         
+        // Initialize management lists
+        initializeManagementLists();
+        
         // Show dashboard by default
         showTab('dashboard');
         
