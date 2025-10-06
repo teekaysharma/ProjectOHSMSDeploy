@@ -1307,6 +1307,36 @@
         }
     }
     
+    // Initialize questions tab switching
+    function initializeQuestionsTabSwitching() {
+        try {
+            const tabs = document.querySelectorAll('.questions-tab');
+            const panels = document.querySelectorAll('.questions-panel');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Remove active class from all tabs and panels
+                    tabs.forEach(t => t.classList.remove('active'));
+                    panels.forEach(p => p.classList.remove('active'));
+                    
+                    // Add active class to clicked tab
+                    tab.classList.add('active');
+                    
+                    // Show corresponding panel
+                    const tabName = tab.dataset.questionsTab;
+                    const targetPanel = document.getElementById(`${tabName}QuestionsPanel`);
+                    if (targetPanel) {
+                        targetPanel.classList.add('active');
+                    }
+                });
+            });
+            
+            console.log('Questions tab switching initialized');
+        } catch (error) {
+            console.error('Error initializing questions tab switching:', error);
+        }
+    }
+
     // Update questions list with proper numbering and section organization
     function updateQuestionsList() {
         try {
@@ -1317,24 +1347,52 @@
             
             const masterConfig = window.app && window.app.masterConfig ? window.app.masterConfig : null;
             if (!masterConfig) {
-                managementContainer.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No template loaded. Use "Load Default Template" to load questions.</div>';
-                siteContainer.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No template loaded. Use "Load Default Template" to load questions.</div>';
+                managementContainer.innerHTML = '<div style="text-align: center; color: #666; padding: 40px;">No template loaded. Use "Load Default Template" to load questions.</div>';
+                siteContainer.innerHTML = '<div style="text-align: center; color: #666; padding: 40px;">No template loaded. Use "Load Default Template" to load questions.</div>';
+                updateQuestionCounts(0, 0);
                 return;
             }
+            
+            let managementQuestionCount = 0;
+            let siteQuestionCount = 0;
             
             // Update management questions with section organization
             if (masterConfig.management) {
                 let managementHtml = renderQuestionsWithSections('management', masterConfig.management);
                 managementContainer.innerHTML = managementHtml;
+                // Count total management questions
+                for (const section in masterConfig.management) {
+                    managementQuestionCount += masterConfig.management[section].length;
+                }
             }
             
             // Update site questions with section organization
             if (masterConfig.site) {
                 let siteHtml = renderQuestionsWithSections('site', masterConfig.site);
                 siteContainer.innerHTML = siteHtml;
+                // Count total site questions
+                for (const section in masterConfig.site) {
+                    siteQuestionCount += masterConfig.site[section].length;
+                }
             }
+            
+            // Update tab counts
+            updateQuestionCounts(managementQuestionCount, siteQuestionCount);
         } catch (error) {
             console.error('Error updating questions list:', error);
+        }
+    }
+    
+    // Update question counts in tab headers
+    function updateQuestionCounts(managementCount, siteCount) {
+        const managementCountElement = document.getElementById('managementQuestionsCount');
+        const siteCountElement = document.getElementById('siteQuestionsCount');
+        
+        if (managementCountElement) {
+            managementCountElement.textContent = `(${managementCount})`;
+        }
+        if (siteCountElement) {
+            siteCountElement.textContent = `(${siteCount})`;
         }
     }
     
