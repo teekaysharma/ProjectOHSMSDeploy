@@ -1198,6 +1198,9 @@
                 });
             }
             
+            // Initialize questions tab switching
+            initializeQuestionsTabSwitching();
+            
             // Update lists when tab is shown
             setTimeout(() => {
                 updateProjectsList();
