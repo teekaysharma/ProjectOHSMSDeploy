@@ -69,7 +69,18 @@
     function getDataByScope(scope) {
         let data = [];
         const project = window.app.getCurrentProject();
-        if (!project) return data;
+        if (!project) {
+            console.log('No project found for scope:', scope);
+            return data;
+        }
+        
+        console.log('Getting data for scope:', scope);
+        console.log('Project structure:', {
+            hasManagementSystemAudit: !!project.managementSystemAudit,
+            managementSections: project.managementSystemAudit ? Object.keys(project.managementSystemAudit) : [],
+            currentSite: project.currentSite,
+            sites: project.sites ? Object.keys(project.sites) : []
+        });
         
         if (scope === 'management') {
             // Get management data
