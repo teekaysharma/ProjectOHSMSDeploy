@@ -830,6 +830,7 @@ function exportToHTML() {
         URL.revokeObjectURL(url);
         
         console.log('HTML report exported successfully');
+        alert('Report exported successfully! The HTML file has been downloaded to your Downloads folder.');
         
     } catch (error) {
         console.error('Error exporting HTML report:', error);
