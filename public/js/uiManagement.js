@@ -856,7 +856,7 @@
         addQuestionToSection(type, section);
     }
     
-    // Add section with site selection options
+    // Add section with appropriate selection options
     function addSectionWithOptions(type) {
         try {
             const inputId = `new${type.charAt(0).toUpperCase() + type.slice(1)}SectionName`;
@@ -873,19 +873,36 @@
                 return;
             }
             
-            let applyToAllSites = true;
-            let specificSite = null;
+            let applyToAll = true;
+            let specificTarget = null;
             
-            if (type === 'site') {
+            if (type === 'management') {
+                // For management sections, handle project selection
+                const projects = getCurrentProjects();
+                if (projects.length > 1) {
+                    const choice = confirm(`Add this section to all projects?\n\nClick OK for ALL PROJECTS\nClick Cancel to choose a specific project`);
+                    if (!choice) {
+                        specificTarget = prompt(`Enter project name or choose from: ${projects.join(', ')}`);
+                        if (!specificTarget || !projects.includes(specificTarget)) {
+                            alert('Invalid project name. Section not added.');
+                            return;
+                        }
+                        applyToAll = false;
+                    }
+                }
+            } else if (type === 'site') {
+                // For site sections, handle site selection
                 const allSitesCheckbox = document.getElementById(`addTo${type.charAt(0).toUpperCase() + type.slice(1)}AllSites`);
                 const siteSelector = document.getElementById(`specific${type.charAt(0).toUpperCase() + type.slice(1)}Site`);
                 
-                applyToAllSites = allSitesCheckbox.checked;
-                if (!applyToAllSites) {
-                    specificSite = siteSelector.value;
-                    if (!specificSite) {
-                        alert('Please select a specific site or check "Add to all sites"');
-                        return;
+                if (allSitesCheckbox && siteSelector) {
+                    applyToAll = allSitesCheckbox.checked;
+                    if (!applyToAll) {
+                        specificTarget = siteSelector.value;
+                        if (!specificTarget) {
+                            alert('Please select a specific site or check "Add to all sites"');
+                            return;
+                        }
                     }
                 }
             }
@@ -894,7 +911,7 @@
             app.masterConfig[type][sectionName] = [];
             
             // Update all projects with the new section
-            updateProjectsWithNewSection(type, sectionName, applyToAllSites, specificSite);
+            updateProjectsWithNewSection(type, sectionName, applyToAll, specificTarget);
             
             input.value = '';
             if (typeof saveData === 'function') {
@@ -902,7 +919,8 @@
             }
             updateQuestionsList();
             
-            console.log(`Section "${sectionName}" added to ${type}${specificSite ? ` (site: ${specificSite})` : ' (all sites)'}`);
+            const targetType = type === 'management' ? 'project' : 'site';
+            console.log(`Section "${sectionName}" added to ${type}${specificTarget ? ` (${targetType}: ${specificTarget})` : ` (all ${targetType}s)`}`);
         } catch (error) {
             console.error('Error adding section:', error);
         }
