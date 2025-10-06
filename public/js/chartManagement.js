@@ -416,7 +416,24 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    layout: {
+                        padding: {
+                            top: 10,
+                            bottom: 40,
+                            left: 10,
+                            right: 10
+                        }
+                    },
                     scales: {
+                        x: {
+                            ticks: {
+                                maxRotation: 0,
+                                minRotation: 0,
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
                         y: {
                             beginAtZero: true,
                             max: 5,
