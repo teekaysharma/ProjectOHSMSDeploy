@@ -126,8 +126,11 @@ function getRecommendationForQuestion(questionText, score) {
 
 // Display recommendations in the UI
 function displayRecommendations(recommendations) {
-    const container = document.getElementById('recommendationsContainer');
-    if (!container) return;
+    const container = document.getElementById('recommendationsContent');
+    if (!container) {
+        console.warn('Recommendations container not found');
+        return;
+    }
     
     if (recommendations.length === 0) {
         container.innerHTML = '<p>No specific recommendations at this time. Continue monitoring and maintaining current standards.</p>';
