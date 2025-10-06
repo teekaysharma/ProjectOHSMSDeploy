@@ -295,8 +295,8 @@
                     score: 0,
                     percentage: 0,
                     rating: 'Unacceptable',
-                    totalItems: 0,
-                    totalQuestions: data.length
+                    totalItems: uniqueCount.answeredQuestions,
+                    totalQuestions: uniqueCount.totalQuestions
                 };
             }
             
