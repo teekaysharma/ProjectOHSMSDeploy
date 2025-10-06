@@ -2,6 +2,10 @@
 import './style.css';
 import './public/css/styles.css';
 
+// Import Chart.js
+import Chart from 'chart.js/auto';
+window.Chart = Chart;
+
 // Initialize global app object before loading any scripts
 window.app = {
     masterConfig: {
