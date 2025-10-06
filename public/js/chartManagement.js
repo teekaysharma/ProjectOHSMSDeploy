@@ -884,6 +884,28 @@
                 }
             });
             
+            // Chart view type buttons (for Performance by Audit Type chart)
+            const chartViewTypeBtn = document.getElementById('chartViewType');
+            const chartViewSectionsBtn = document.getElementById('chartViewSections');
+            
+            if (chartViewTypeBtn) {
+                chartViewTypeBtn.addEventListener('click', () => {
+                    chartViewTypeBtn.classList.add('active');
+                    if (chartViewSectionsBtn) chartViewSectionsBtn.classList.remove('active');
+                    // Re-render the management chart with current scope
+                    renderManagementChart(window.app.currentChartScope || 'all');
+                });
+            }
+            
+            if (chartViewSectionsBtn) {
+                chartViewSectionsBtn.addEventListener('click', () => {
+                    chartViewSectionsBtn.classList.add('active');
+                    if (chartViewTypeBtn) chartViewTypeBtn.classList.remove('active');
+                    // Re-render the management chart with current scope
+                    renderManagementChart(window.app.currentChartScope || 'all');
+                });
+            }
+            
             console.log('Chart scope listeners initialized successfully');
         } catch (error) {
             console.error('Error initializing chart scope listeners:', error);
