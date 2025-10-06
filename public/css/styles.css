@@ -216,11 +216,11 @@ body {
     border-radius: 15px;
     padding: 25px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    height: 400px;
-    overflow: hidden;
+    height: 450px;
+    overflow: visible;
 }
 .chart-container.full-width {
-    height: 450px;
+    height: 500px;
 }
 .chart-controls {
     display: flex;
@@ -247,11 +247,13 @@ body {
 }
 .chart-canvas-container {
     position: relative;
-    height: 300px;
-    overflow-x: auto;
+    height: 320px;
+    overflow: visible;
+    padding-bottom: 30px;
 }
 .chart-container.full-width .chart-canvas-container {
-    height: 350px;
+    height: 380px;
+    padding-bottom: 40px;
 }
 /* Recommendations Section */
 .recommendations-section {
