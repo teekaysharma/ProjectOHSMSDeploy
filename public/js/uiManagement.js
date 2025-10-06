@@ -791,26 +791,41 @@
         }
     }
     
-    // Add question to specific section with site selection options
+    // Add question to specific section with appropriate selection options
     function addQuestionToSection(type, section) {
         try {
             const questionText = prompt('Enter the question text:');
             if (!questionText) return;
             
-            let applyToAllSites = true;
-            let specificSite = null;
+            let applyToAll = true;
+            let specificTarget = null;
             
-            if (type === 'site') {
+            if (type === 'management') {
+                // For management questions, ask about projects
+                const projects = getCurrentProjects();
+                if (projects.length > 1) {
+                    const choice = confirm(`Add this question to all projects?\n\nClick OK for ALL PROJECTS\nClick Cancel to choose a specific project`);
+                    if (!choice) {
+                        specificTarget = prompt(`Enter project name or choose from: ${projects.join(', ')}`);
+                        if (!specificTarget || !projects.includes(specificTarget)) {
+                            alert('Invalid project name. Question not added.');
+                            return;
+                        }
+                        applyToAll = false;
+                    }
+                }
+            } else if (type === 'site') {
+                // For site questions, ask about sites
                 const sites = getCurrentProjectSites();
                 if (sites.length > 1) {
                     const choice = confirm(`Add this question to all sites?\n\nClick OK for ALL SITES\nClick Cancel to choose a specific site`);
                     if (!choice) {
-                        specificSite = prompt(`Enter site name or choose from: ${sites.join(', ')}`);
-                        if (!specificSite || !sites.includes(specificSite)) {
+                        specificTarget = prompt(`Enter site name or choose from: ${sites.join(', ')}`);
+                        if (!specificTarget || !sites.includes(specificTarget)) {
                             alert('Invalid site name. Question not added.');
                             return;
                         }
-                        applyToAllSites = false;
+                        applyToAll = false;
                     }
                 }
             }
@@ -822,14 +837,15 @@
             app.masterConfig[type][section].push(questionText);
             
             // Update projects with the new question
-            updateProjectsWithNewQuestion(type, section, questionText, applyToAllSites, specificSite);
+            updateProjectsWithNewQuestion(type, section, questionText, applyToAll, specificTarget);
             
             if (typeof saveData === 'function') {
                 saveData();
             }
             updateQuestionsList();
             
-            console.log(`Question added to ${type} - ${section}${specificSite ? ` (site: ${specificSite})` : ' (all sites)'}`);
+            const targetType = type === 'management' ? 'project' : 'site';
+            console.log(`Question added to ${type} - ${section}${specificTarget ? ` (${targetType}: ${specificTarget})` : ` (all ${targetType}s)`}`);
         } catch (error) {
             console.error('Error adding question:', error);
         }
