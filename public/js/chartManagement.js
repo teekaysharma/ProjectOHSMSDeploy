@@ -63,7 +63,7 @@
                 }
             }
         } else if (scope === 'all' && project.currentSite && project.sites[project.currentSite]) {
-            // Get current site data
+            // Get current site data only
             const site = project.sites[project.currentSite];
             for (const section in site) {
                 if (Array.isArray(site[section])) {
