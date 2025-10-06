@@ -424,39 +424,11 @@
                 return;
             }
 
-            // Get data based on scope
-            const data = getDataByScope(scope);
-            
-            // For calculations, filter out score 0
-            const filteredData = getFilteredDataForCalculations(data);
-            
-            // Group data by audit type (management vs site)
-            const auditTypes = {
-                'Management System': [],
-                'Site Performance': []
-            };
-            
-            // This is a simplified approach - you may need to adjust based on your data structure
-            // For now, we'll assume all data is from the current scope
-            if (scope === 'management') {
-                auditTypes['Management System'] = filteredData;
-            } else {
-                auditTypes['Site Performance'] = filteredData;
-            }
-            
-            // Calculate average scores for each audit type (excluding score 0)
-            const auditTypeScores = {};
-            for (const type in auditTypes) {
-                const typeData = auditTypes[type];
-                if (typeData.length > 0) {
-                    const totalScore = typeData.reduce((sum, item) => sum + item.score, 0);
-                    const averageScore = totalScore / typeData.length;
-                    auditTypeScores[type] = parseFloat(averageScore.toFixed(1));
-                } else {
-                    auditTypeScores[type] = 0;
-                }
-            }
-            
+            // Get current view type (type or sections)
+            const viewTypeBtn = document.getElementById('chartViewType');
+            const viewSectionsBtn = document.getElementById('chartViewSections');
+            const viewType = viewTypeBtn && viewTypeBtn.classList.contains('active') ? 'type' : 'sections';
+
             // Create or update chart
             const ctx = canvas.getContext('2d');
             
@@ -465,63 +437,248 @@
             }
             
             if (!app.charts) app.charts = {};
-            
-            app.charts.managementChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: Object.keys(auditTypeScores),
-                    datasets: [{
-                        label: 'Average Score',
-                        data: Object.values(auditTypeScores),
-                        backgroundColor: [
-                            '#4299e1', // Management System - Blue
-                            '#48bb78'  // Site Performance - Green
-                        ],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    layout: {
-                        padding: {
-                            top: 10,
-                            bottom: 40,
-                            left: 10,
-                            right: 10
-                        }
-                    },
-                    scales: {
-                        x: {
-                            ticks: {
-                                maxRotation: 0,
-                                minRotation: 0,
-                                font: {
-                                    size: 12
-                                }
-                            }
-                        },
-                        y: {
-                            beginAtZero: true,
-                            max: 5,
-                            title: {
-                                display: true,
-                                text: 'Average Score'
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    }
-                }
-            });
+
+            if (viewType === 'sections') {
+                renderManagementChartBySections(scope, ctx);
+            } else {
+                renderManagementChartByType(scope, ctx);
+            }
             
             console.log('Management chart rendered successfully');
         } catch (error) {
             console.error('Error rendering management chart:', error);
         }
+    }
+
+    // Render chart by audit type (original functionality)
+    function renderManagementChartByType(scope, ctx) {
+        // Get data based on scope
+        const data = getDataByScope(scope);
+        
+        // For calculations, filter out score 0
+        const filteredData = getFilteredDataForCalculations(data);
+        
+        // Group data by audit type (management vs site)
+        const auditTypes = {
+            'Management System': [],
+            'Site Performance': []
+        };
+        
+        // This is a simplified approach - you may need to adjust based on your data structure
+        // For now, we'll assume all data is from the current scope
+        if (scope === 'management') {
+            auditTypes['Management System'] = filteredData;
+        } else if (scope === 'all-sites') {
+            auditTypes['Site Performance'] = filteredData;
+        } else {
+            // For 'all' and 'total' scope, we need to separate the data
+            const project = window.app.getCurrentProject();
+            if (project) {
+                let managementData = [];
+                let siteData = [];
+                
+                // Get management data
+                if (project.managementSystemAudit) {
+                    for (const section in project.managementSystemAudit) {
+                        if (Array.isArray(project.managementSystemAudit[section])) {
+                            managementData = managementData.concat(project.managementSystemAudit[section]);
+                        }
+                    }
+                }
+                
+                // Get site data based on scope
+                if (scope === 'total' && project.sites) {
+                    // Get all sites
+                    for (const siteName in project.sites) {
+                        const site = project.sites[siteName];
+                        for (const section in site) {
+                            if (Array.isArray(site[section])) {
+                                siteData = siteData.concat(site[section]);
+                            }
+                        }
+                    }
+                } else if (project.currentSite && project.sites[project.currentSite]) {
+                    // Get current site
+                    const site = project.sites[project.currentSite];
+                    for (const section in site) {
+                        if (Array.isArray(site[section])) {
+                            siteData = siteData.concat(site[section]);
+                        }
+                    }
+                }
+                
+                auditTypes['Management System'] = getFilteredDataForCalculations(managementData);
+                auditTypes['Site Performance'] = getFilteredDataForCalculations(siteData);
+            }
+        }
+        
+        // Calculate average scores for each audit type (excluding score 0)
+        const auditTypeScores = {};
+        for (const type in auditTypes) {
+            const typeData = auditTypes[type];
+            if (typeData.length > 0) {
+                const totalScore = typeData.reduce((sum, item) => sum + item.score, 0);
+                const averageScore = totalScore / typeData.length;
+                auditTypeScores[type] = parseFloat(averageScore.toFixed(1));
+            } else {
+                auditTypeScores[type] = 0;
+            }
+        }
+        
+        app.charts.managementChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(auditTypeScores),
+                datasets: [{
+                    label: 'Average Score',
+                    data: Object.values(auditTypeScores),
+                    backgroundColor: [
+                        '#4299e1', // Management System - Blue
+                        '#48bb78'  // Site Performance - Green
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: {
+                    padding: {
+                        top: 10,
+                        bottom: 40,
+                        left: 10,
+                        right: 10
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            maxRotation: 0,
+                            minRotation: 0,
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        max: 5,
+                        title: {
+                            display: true,
+                            text: 'Average Score'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+    }
+
+    // Render chart by sections (new functionality)
+    function renderManagementChartBySections(scope, ctx) {
+        const sectionsData = getDataBySections(scope);
+        const { managementSections, siteSections } = sectionsData;
+        
+        // Get all unique section names
+        const allSections = new Set([
+            ...Object.keys(managementSections),
+            ...Object.keys(siteSections)
+        ]);
+        
+        const sectionNames = Array.from(allSections).sort();
+        
+        // Calculate average scores for each section
+        const managementScores = [];
+        const siteScores = [];
+        
+        sectionNames.forEach(section => {
+            // Management section score
+            if (managementSections[section]) {
+                const filteredData = getFilteredDataForCalculations(managementSections[section]);
+                if (filteredData.length > 0) {
+                    const totalScore = filteredData.reduce((sum, item) => sum + item.score, 0);
+                    const averageScore = totalScore / filteredData.length;
+                    managementScores.push(parseFloat(averageScore.toFixed(1)));
+                } else {
+                    managementScores.push(0);
+                }
+            } else {
+                managementScores.push(0);
+            }
+            
+            // Site section score
+            if (siteSections[section]) {
+                const filteredData = getFilteredDataForCalculations(siteSections[section]);
+                if (filteredData.length > 0) {
+                    const totalScore = filteredData.reduce((sum, item) => sum + item.score, 0);
+                    const averageScore = totalScore / filteredData.length;
+                    siteScores.push(parseFloat(averageScore.toFixed(1)));
+                } else {
+                    siteScores.push(0);
+                }
+            } else {
+                siteScores.push(0);
+            }
+        });
+        
+        app.charts.managementChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: sectionNames.map(name => name.replace(/([A-Z])/g, ' $1').trim()),
+                datasets: [{
+                    label: 'Management System',
+                    data: managementScores,
+                    backgroundColor: '#4299e1',
+                    borderWidth: 1
+                }, {
+                    label: 'Site Performance',
+                    data: siteScores,
+                    backgroundColor: '#48bb78',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: {
+                    padding: {
+                        top: 10,
+                        bottom: 40,
+                        left: 10,
+                        right: 10
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 0,
+                            font: {
+                                size: 10
+                            }
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        max: 5,
+                        title: {
+                            display: true,
+                            text: 'Average Score'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    }
+                }
+            }
+        });
     }
 
     // Update dashboard
