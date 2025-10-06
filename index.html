@@ -91,26 +91,18 @@
                     </select>
                     <span class="info-text">Manage projects in System Settings tab</span>
                 </div>
-                
-                <div class="project-actions">
-                    <button class="btn btn-green" id="addProjectBtn">Add New Project</button>
-                    <button class="btn btn-secondary" id="cloneProjectBtn">Clone Current Project</button>
-                </div>
             </div>
             
             <div class="project-info">
                 <input type="text" id="projectName" placeholder="Project Name" value="POWER COMPANY PJSC">
-                <input type="text" id="siteName" placeholder="Site Name" disabled>
+                <div class="site-name-container">
+                    <select id="siteSelector" class="site-name-dropdown">
+                        <option value="">Select a site</option>
+                    </select>
+                </div>
                 <input type="date" id="inspectionDate">
                 <input type="text" id="leadAuditor" placeholder="Lead Auditor">
                 <input type="text" id="projectDirector" placeholder="Project Director">
-            </div>
-            
-            <div class="site-selector">
-                <select id="siteSelector">
-                    <option value="">Select a site</option>
-                </select>
-                <span class="info-text">Manage sites in System Settings tab</span>
             </div>
         </div>
         
