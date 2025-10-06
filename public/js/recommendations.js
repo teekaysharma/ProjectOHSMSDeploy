@@ -1,61 +1,86 @@
 // Recommendations Module
 // Generates recommendations based on audit results
 
-// Generate recommendations based on scores
-function generateRecommendations(projectData, sitesData) {
-    const recommendations = [];
-    
-    // Analyze project-level issues
-    if (projectData && projectData.questions) {
-        const lowScoreQuestions = projectData.questions.filter(q => q.score <= 2 && q.score > 0);
+// Generate recommendations based on audit scores
+function generateRecommendations() {
+    try {
+        const recommendations = [];
+        const project = window.app.getCurrentProject();
         
-        lowScoreQuestions.forEach(question => {
-            const template = window.dataManagement?.getCurrentTemplate();
-            if (template && template.managementQuestions[question.index]) {
-                const questionText = template.managementQuestions[question.index].text;
-                recommendations.push({
-                    type: 'Management System',
-                    priority: question.score === 1 ? 'High' : 'Medium',
-                    issue: questionText,
-                    recommendation: getRecommendationForQuestion(questionText, question.score),
-                    score: question.score
-                });
+        if (!project) {
+            console.log('No project data available for recommendations');
+            return recommendations;
+        }
+
+        // Analyze Management System Audit data
+        if (project.managementSystemAudit) {
+            for (const section in project.managementSystemAudit) {
+                if (Array.isArray(project.managementSystemAudit[section])) {
+                    const sectionData = project.managementSystemAudit[section];
+                    const lowScoreItems = sectionData.filter(item => item.score <= 2 && item.score > 0);
+                    
+                    lowScoreItems.forEach(item => {
+                        recommendations.push({
+                            type: 'Management System',
+                            section: formatSectionName(section),
+                            priority: item.score === 1 ? 'High' : 'Medium',
+                            issue: item.name || 'Audit item requires attention',
+                            recommendation: getRecommendationForQuestion(item.name || '', item.score),
+                            score: item.score,
+                            comments: item.comments || ''
+                        });
+                    });
+                }
             }
-        });
-    }
-    
-    // Analyze site-level issues
-    if (sitesData && sitesData.length > 0) {
-        sitesData.forEach(site => {
-            if (site.questions) {
-                const lowScoreQuestions = site.questions.filter(q => q.score <= 2 && q.score > 0);
-                
-                lowScoreQuestions.forEach(question => {
-                    const template = window.dataManagement?.getCurrentTemplate();
-                    if (template && template.siteQuestions[question.index]) {
-                        const questionText = template.siteQuestions[question.index].text;
+        }
+
+        // Analyze Site Performance data
+        if (project.sites && project.currentSite && project.sites[project.currentSite]) {
+            const currentSite = project.sites[project.currentSite];
+            
+            for (const section in currentSite) {
+                if (Array.isArray(currentSite[section])) {
+                    const sectionData = currentSite[section];
+                    const lowScoreItems = sectionData.filter(item => item.score <= 2 && item.score > 0);
+                    
+                    lowScoreItems.forEach(item => {
                         recommendations.push({
                             type: 'Site Performance',
-                            site: site.name,
-                            priority: question.score === 1 ? 'High' : 'Medium',
-                            issue: questionText,
-                            recommendation: getRecommendationForQuestion(questionText, question.score),
-                            score: question.score
+                            site: project.currentSite,
+                            section: formatSectionName(section),
+                            priority: item.score === 1 ? 'High' : 'Medium',
+                            issue: item.name || 'Site audit item requires attention',
+                            recommendation: getRecommendationForQuestion(item.name || '', item.score),
+                            score: item.score,
+                            comments: item.comments || ''
                         });
-                    }
-                });
+                    });
+                }
             }
+        }
+
+        // Sort by priority and score
+        recommendations.sort((a, b) => {
+            if (a.priority === 'High' && b.priority !== 'High') return -1;
+            if (b.priority === 'High' && a.priority !== 'High') return 1;
+            return a.score - b.score;
         });
+
+        console.log('Generated recommendations:', recommendations);
+        return recommendations;
+        
+    } catch (error) {
+        console.error('Error generating recommendations:', error);
+        return [];
     }
-    
-    // Sort by priority and score
-    recommendations.sort((a, b) => {
-        if (a.priority === 'High' && b.priority !== 'High') return -1;
-        if (b.priority === 'High' && a.priority !== 'High') return 1;
-        return a.score - b.score;
-    });
-    
-    return recommendations;
+}
+
+// Helper function to format section names
+function formatSectionName(sectionName) {
+    return sectionName
+        .replace(/([A-Z])/g, ' $1')
+        .trim()
+        .replace(/^\w/, c => c.toUpperCase());
 }
 
 // Get specific recommendation based on question content and score
