@@ -354,6 +354,80 @@ body {
 .edit-indicator:hover {
     color: #4c51bf;
 }
+/* Recommendations Styling */
+.recommendations-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+.recommendation-item {
+    background: #f8f9ff;
+    border-radius: 10px;
+    padding: 15px;
+    border-left: 4px solid #e0e6ed;
+}
+.recommendation-item.priority-high {
+    border-left-color: #c53030;
+    background: #fee;
+}
+.recommendation-item.priority-medium {
+    border-left-color: #dd6b20;
+    background: #fef5e7;
+}
+.recommendation-item.priority-low {
+    border-left-color: #d69e2e;
+    background: #fefcbf;
+}
+.recommendation-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.recommendation-type {
+    background: #4299e1;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+}
+.recommendation-site {
+    background: #48bb78;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+}
+.recommendation-priority {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    color: white;
+}
+.recommendation-priority.priority-high {
+    background: #c53030;
+}
+.recommendation-priority.priority-medium {
+    background: #dd6b20;
+}
+.recommendation-priority.priority-low {
+    background: #d69e2e;
+}
+.recommendation-issue {
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: #2c3e50;
+}
+.recommendation-action {
+    font-size: 14px;
+    color: #2c3e50;
+    line-height: 1.5;
+}
 /* Scoring Legend */
 .scoring-legend {
     background: white;
