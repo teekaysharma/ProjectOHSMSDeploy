@@ -306,6 +306,14 @@ function setupRecommendationEditing() {
         });
     }
     
+    const sampleBtn = document.getElementById('showSampleRecommendationsBtn');
+    if (sampleBtn) {
+        sampleBtn.addEventListener('click', () => {
+            const sampleRecommendations = generateSampleRecommendations();
+            displayRecommendations(sampleRecommendations);
+        });
+    }
+    
     if (saveBtn) {
         saveBtn.addEventListener('click', () => {
             if (content) {
