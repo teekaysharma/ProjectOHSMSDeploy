@@ -1205,6 +1205,18 @@
                 updateQuestionsList();
             }, 1000);
             
+            // Also update when System Settings tab is clicked
+            const systemSettingsTab = document.querySelector('button[data-tab-name="master"]');
+            if (systemSettingsTab) {
+                systemSettingsTab.addEventListener('click', () => {
+                    setTimeout(() => {
+                        updateProjectsList();
+                        updateSitesList();
+                        updateQuestionsList();
+                    }, 500);
+                });
+            }
+            
             console.log('Management lists initialized successfully');
         } catch (error) {
             console.error('Error initializing management lists:', error);
