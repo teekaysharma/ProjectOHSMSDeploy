@@ -284,6 +284,9 @@
             // Get data based on scope
             const data = getDataByScope(scope);
             
+            // Get unique questions count
+            const uniqueCount = getUniqueQuestionsCount(scope);
+            
             // Filter out score 0 for calculations
             const filteredData = getFilteredDataForCalculations(data);
             
