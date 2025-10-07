@@ -84,33 +84,28 @@
             <h1>OHS Management System</h1>
             <p>Safety Management System Audit & Site Safety Audit Tool</p>
             
-            <div class="project-management">
+            <div class="header-controls">
                 <div class="project-selector">
                     <select id="projectSelector">
-                        <option value="">Default Project</option>
+                        <option value="">Select a project</option>
                     </select>
                     <span class="info-text">Manage projects in System Settings tab</span>
                 </div>
                 
-                <div class="project-actions">
-                    <button class="btn btn-green" id="addProjectBtn">Add New Project</button>
-                    <button class="btn btn-blue" id="cloneProjectBtn">Clone Current Project</button>
+                <div class="project-info">
+                    <input type="text" id="projectName" placeholder="Project Name">
+                    <select id="siteSelector" class="site-name-dropdown">
+                        <option value="">Select a site</option>
+                    </select>
+                    <input type="date" id="inspectionDate">
+                    <input type="text" id="leadAuditor" placeholder="Lead Auditor">
+                    <input type="text" id="projectDirector" placeholder="Project Director">
                 </div>
-            </div>
-            
-            <div class="project-info">
-                <input type="text" id="projectNameDisplay" placeholder="Default Project" readonly>
-                <input type="text" id="siteNameDisplay" placeholder="Default Site" readonly>
-                <input type="date" id="inspectionDate">
-                <input type="text" id="leadAuditor" placeholder="Lead Auditor">
-                <input type="text" id="projectDirector" placeholder="Project Director">
-            </div>
-            
-            <div class="site-management">
-                <select id="siteSelector" class="site-name-dropdown">
-                    <option value="">Default Site</option>
-                </select>
-                <span class="info-text">Manage sites in System Settings tab</span>
+                
+                <div class="site-management">
+                    <input type="text" id="siteName" placeholder="Site Name">
+                    <span class="info-text">Manage sites in System Settings tab</span>
+                </div>
             </div>
         </div>
         
