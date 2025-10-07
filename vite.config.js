@@ -6,7 +6,7 @@ export default defineConfig({
   // For example, if your repo is github.com/username/ohs-audit-tool
   // then set base to '/ohs-audit-tool/'
   // If deploying to username.github.io, set base to '/'
-  base: '/ohs-audit-tool/',
+  base: '/ProjectOHSMSDeploy/',
   
   build: {
     outDir: 'dist',
