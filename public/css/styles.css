@@ -76,6 +76,11 @@ body {
     background: white;
     min-width: 200px;
 }
+.info-text {
+    font-size: 14px;
+    color: #666;
+    font-style: italic;
+}
 .project-info {
     display: flex;
     gap: 15px;
