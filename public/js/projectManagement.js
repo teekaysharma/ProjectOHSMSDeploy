@@ -132,6 +132,12 @@
                 projectNameField.value = app.inspectionData.currentProject || '';
             }
             
+            // Update project name display field
+            const projectNameDisplay = document.getElementById('projectNameDisplay');
+            if (projectNameDisplay) {
+                projectNameDisplay.value = app.inspectionData.currentProject || 'Default Project';
+            }
+            
             console.log('Project selector updated successfully');
         } catch (error) {
             console.error('Error updating project selector:', error);
