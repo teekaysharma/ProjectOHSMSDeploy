@@ -37,38 +37,59 @@ body {
     color: #555;
     font-size: 1.1rem;
 }
-/* Project Management Styles */
-.project-management {
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 15px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+/* Header Controls Styles */
+.header-controls {
+    margin-top: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
+
 .project-selector {
     display: flex;
     align-items: center;
     gap: 15px;
-    margin-bottom: 15px;
+    justify-content: center;
 }
+
 .project-selector select {
-    flex: 1;
-    padding: 12px;
+    padding: 12px 15px;
     border: 2px solid #e0e6ed;
     border-radius: 8px;
     font-size: 16px;
     background: white;
+    min-width: 200px;
 }
-.project-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 15px;
+
+.info-text {
+    font-size: 14px;
+    color: #666;
+    font-style: italic;
 }
+
 .project-info {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    display: flex;
+    justify-content: center;
     gap: 15px;
-    margin: 20px 0;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.site-management {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    justify-content: center;
+}
+.project-info input, .project-info select {
+    padding: 12px 15px;
+    border: 2px solid #e0e6ed;
+    border-radius: 8px;
+    font-size: 16px;
+    background: white;
+    min-width: 180px;
+    flex: 1;
+    max-width: 200px;
 }
 .project-info input, .project-info select {
     padding: 12px 15px;
@@ -783,6 +804,9 @@ body {
 }
 .btn-green {
     background: linear-gradient(135deg, #4CAF50, #81C784);
+}
+.btn-blue {
+    background: linear-gradient(135deg, #2196F3, #64B5F6);
 }
 /* Project Management Settings Styles */
 .project-management-settings {

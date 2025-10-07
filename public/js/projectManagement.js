@@ -132,6 +132,12 @@
                 projectNameField.value = app.inspectionData.currentProject || '';
             }
             
+            // Update project name display field
+            const projectNameDisplay = document.getElementById('projectNameDisplay');
+            if (projectNameDisplay) {
+                projectNameDisplay.value = app.inspectionData.currentProject || 'Default Project';
+            }
+            
             console.log('Project selector updated successfully');
         } catch (error) {
             console.error('Error updating project selector:', error);
@@ -169,6 +175,14 @@
                 siteNameField.disabled = true;
             }
             
+            // Update site name display field
+            const siteNameDisplay = document.getElementById('siteNameDisplay');
+            if (siteNameDisplay && project && project.currentSite) {
+                siteNameDisplay.value = project.currentSite;
+            } else if (siteNameDisplay) {
+                siteNameDisplay.value = 'Default Site';
+            }
+            
             console.log('Site selector updated successfully');
         } catch (error) {
             console.error('Error updating site selector:', error);
@@ -180,8 +194,16 @@
         try {
             if (!projectName) {
                 app.inspectionData.currentProject = '';
-                document.getElementById('projectName').value = '';
-                document.getElementById('siteName').value = '';
+                const projectNameField = document.getElementById('projectName');
+                const siteNameField = document.getElementById('siteName');
+                const projectNameDisplay = document.getElementById('projectNameDisplay');
+                const siteNameDisplay = document.getElementById('siteNameDisplay');
+                
+                if (projectNameField) projectNameField.value = '';
+                if (siteNameField) siteNameField.value = '';
+                if (projectNameDisplay) projectNameDisplay.value = 'Default Project';
+                if (siteNameDisplay) siteNameDisplay.value = 'Default Site';
+                
                 updateProjectSelector();
                 updateSiteSelector();
                 if (typeof saveData === 'function') {

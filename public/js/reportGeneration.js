@@ -111,12 +111,20 @@ function generateReportSummary(project) {
         }
         
         // Calculate overall scores using chart management functions
-        if (window.chartManagement && window.chartManagement.calculateOverallScore) {
+        if (typeof calculateOverallScore === 'function') {
             summary.overallScores = {
-                management: window.chartManagement.calculateOverallScore('management'),
-                currentSite: window.chartManagement.calculateOverallScore('all'),
-                allSites: window.chartManagement.calculateOverallScore('all-sites'),
-                projectOverview: window.chartManagement.calculateOverallScore('total')
+                management: calculateOverallScore('management'),
+                currentSite: calculateOverallScore('all'),
+                allSites: calculateOverallScore('all-sites'),
+                projectOverview: calculateOverallScore('total')
+            };
+        } else {
+            console.warn('calculateOverallScore function not available, using basic calculations');
+            summary.overallScores = {
+                management: { score: summary.managementScore, rating: 'N/A', percentage: 0 },
+                currentSite: { score: 0, rating: 'N/A', percentage: 0 },
+                allSites: { score: 0, rating: 'N/A', percentage: 0 },
+                projectOverview: { score: 0, rating: 'N/A', percentage: 0 }
             };
         }
         
@@ -125,13 +133,23 @@ function generateReportSummary(project) {
         console.error('Error generating report summary:', error);
         return {
             projectName: 'Unknown Project',
+            currentSite: 'Unknown Site',
             totalSites: 0,
+            inspectionDate: new Date().toISOString().split('T')[0],
+            leadAuditor: 'Not specified',
+            projectDirector: 'Not specified',
             managementScore: 0,
             siteScores: {},
             criticalIssues: [],
-            overallScores: {}
+            overallScores: {
+                management: { score: 0, rating: 'N/A', percentage: 0 },
+                currentSite: { score: 0, rating: 'N/A', percentage: 0 },
+                allSites: { score: 0, rating: 'N/A', percentage: 0 },
+                projectOverview: { score: 0, rating: 'N/A', percentage: 0 }
+            }
         };
     }
+}
     
 // Create Executive Report HTML with A4 print layout
 function createExecutiveReportHTML(report) {
@@ -229,7 +247,7 @@ function createFullHTMLReport(report) {
     return createExecutiveReportHTML(report);
 }
 
-// Display report in new window
+// Display report in new window with fallback for popup blockers
 function displayReportInNewWindow(htmlContent, title) {
     const newWindow = window.open('', '_blank');
     if (newWindow) {
@@ -237,7 +255,18 @@ function displayReportInNewWindow(htmlContent, title) {
         newWindow.document.close();
         newWindow.focus();
     } else {
-        alert('Please allow pop-ups to view the report in a new window');
+        // Fallback for popup blockers - create downloadable HTML file
+        console.log('Popup blocked, creating downloadable HTML file instead');
+        const blob = new Blob([htmlContent], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${title.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.html`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        alert('Report downloaded as HTML file since pop-ups are blocked. You can open it in your browser.');
     }
 }
 
@@ -614,53 +643,35 @@ function generateRecommendationsHTML(recommendations) {
     `;
 }
 
-    // Calculate overall compliance
-    if (projectData && projectData.score > 0 && summary.averageSiteScore > 0) {
-        summary.overallCompliance = Math.round((projectData.score + summary.averageSiteScore) / 2);
-    } else if (projectData && projectData.score > 0) {
-        summary.overallCompliance = projectData.score;
-    } else if (summary.averageSiteScore > 0) {
-        summary.overallCompliance = summary.averageSiteScore;
-    }
-    
-    // Count critical issues (scores of 1 or 2)
-    if (projectData && projectData.questions) {
-        summary.criticalIssues += projectData.questions.filter(q => q.score <= 2 && q.score > 0).length;
-    }
-    
-    if (sitesData) {
-        sitesData.forEach(site => {
-            if (site.questions) {
-                summary.criticalIssues += site.questions.filter(q => q.score <= 2 && q.score > 0).length;
-            }
-        });
-    }
-    
-    return summary;
-}
-
 // Capture charts for report
 function captureChartsForReport() {
     try {
         const charts = {};
         
         // Capture dashboard charts if they exist
-        if (window.app && window.app.charts) {
-            const chartElements = ['ratingChart', 'distributionChart', 'managementChart'];
-            
-            chartElements.forEach(chartId => {
-                const canvas = document.getElementById(chartId);
-                if (canvas) {
-                    try {
-                        charts[chartId] = canvas.toDataURL('image/png');
-                    } catch (error) {
-                        console.warn(`Could not capture chart ${chartId}:`, error);
-                        charts[chartId] = null;
-                    }
-                }
-            });
-        }
+        const chartElements = ['ratingChart', 'distributionChart', 'managementChart'];
         
+        chartElements.forEach(chartId => {
+            const canvas = document.getElementById(chartId);
+            if (canvas && canvas.getContext) {
+                try {
+                    // Check if canvas has been rendered
+                    const ctx = canvas.getContext('2d');
+                    if (ctx) {
+                        charts[chartId] = canvas.toDataURL('image/png', 0.8);
+                        console.log(`Successfully captured chart: ${chartId}`);
+                    }
+                } catch (error) {
+                    console.warn(`Could not capture chart ${chartId}:`, error);
+                    charts[chartId] = null;
+                }
+            } else {
+                console.warn(`Chart canvas not found or not ready: ${chartId}`);
+                charts[chartId] = null;
+            }
+        });
+        
+        console.log('Charts captured for report:', Object.keys(charts));
         return charts;
     } catch (error) {
         console.error('Error capturing charts:', error);
@@ -753,20 +764,43 @@ function generateExecutiveReport() {
     try {
         console.log('Generating executive report...');
         
-        const report = generateAuditReport();
-        if (!report) {
+        // Step 1: Test basic data availability
+        console.log('Step 1: Checking data availability...');
+        const project = window.app ? window.app.getCurrentProject() : null;
+        console.log('Project data:', project);
+        
+        if (!project) {
+            console.error('No project data available');
+            alert('No project data available. Please ensure you have a project selected.');
             return;
         }
         
-        // Create executive report HTML
-        const reportHtml = createExecutiveReportHTML(report);
+        // Step 2: Generate report data
+        console.log('Step 2: Generating report data...');
+        const report = generateAuditReport();
+        console.log('Generated report:', report);
         
-        // Display in a new window/tab for printing
+        if (!report) {
+            console.error('Failed to generate report data');
+            alert('Failed to generate report data. Please check the console for details.');
+            return;
+        }
+        
+        // Step 3: Create HTML
+        console.log('Step 3: Creating report HTML...');
+        const reportHtml = createExecutiveReportHTML(report);
+        console.log('Report HTML generated successfully, length:', reportHtml.length);
+        
+        // Step 4: Display in new window
+        console.log('Step 4: Opening report in new window...');
         displayReportInNewWindow(reportHtml, 'Executive Audit Report');
         
+        console.log('Executive report generation completed successfully!');
+        
     } catch (error) {
-        console.error('Error generating executive report:', error);
-        alert('Error generating executive report. Please check the console for details.');
+        console.error('Detailed error in generateExecutiveReport:', error);
+        console.error('Error stack:', error.stack);
+        alert(`Error generating executive report: ${error.message}\n\nCheck console for details.`);
     }
 }
 
@@ -796,6 +830,7 @@ function exportToHTML() {
         URL.revokeObjectURL(url);
         
         console.log('HTML report exported successfully');
+        alert('Report exported successfully! The HTML file has been downloaded to your Downloads folder.');
         
     } catch (error) {
         console.error('Error exporting HTML report:', error);
