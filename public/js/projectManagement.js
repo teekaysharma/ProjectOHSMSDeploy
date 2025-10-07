@@ -194,8 +194,16 @@
         try {
             if (!projectName) {
                 app.inspectionData.currentProject = '';
-                document.getElementById('projectName').value = '';
-                document.getElementById('siteName').value = '';
+                const projectNameField = document.getElementById('projectName');
+                const siteNameField = document.getElementById('siteName');
+                const projectNameDisplay = document.getElementById('projectNameDisplay');
+                const siteNameDisplay = document.getElementById('siteNameDisplay');
+                
+                if (projectNameField) projectNameField.value = '';
+                if (siteNameField) siteNameField.value = '';
+                if (projectNameDisplay) projectNameDisplay.value = 'Default Project';
+                if (siteNameDisplay) siteNameDisplay.value = 'Default Site';
+                
                 updateProjectSelector();
                 updateSiteSelector();
                 if (typeof saveData === 'function') {
