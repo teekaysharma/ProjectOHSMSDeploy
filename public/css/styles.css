@@ -784,6 +784,9 @@ body {
 .btn-green {
     background: linear-gradient(135deg, #4CAF50, #81C784);
 }
+.btn-blue {
+    background: linear-gradient(135deg, #2196F3, #64B5F6);
+}
 /* Project Management Settings Styles */
 .project-management-settings {
     background: #f0f8ff;
