@@ -175,6 +175,14 @@
                 siteNameField.disabled = true;
             }
             
+            // Update site name display field
+            const siteNameDisplay = document.getElementById('siteNameDisplay');
+            if (siteNameDisplay && project && project.currentSite) {
+                siteNameDisplay.value = project.currentSite;
+            } else if (siteNameDisplay) {
+                siteNameDisplay.value = 'Default Site';
+            }
+            
             console.log('Site selector updated successfully');
         } catch (error) {
             console.error('Error updating site selector:', error);
