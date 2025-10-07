@@ -13,8 +13,8 @@ export default defineConfig({
     assetsDir: 'assets',
     // Generate sourcemaps for easier debugging
     sourcemap: false,
-    // Optimize build
-    minify: 'terser',
+    // Optimize build (using esbuild, faster than terser)
+    minify: 'esbuild',
     rollupOptions: {
       output: {
         manualChunks: {
